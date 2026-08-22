@@ -9,10 +9,12 @@
 #   ./run.sh                          # all 500 instances, 4 workers
 #   ./run.sh [max_instances] [-w workers]
 #   ./run.sh --limit-new-ok N [--limit-max-try M]
+#   ./run.sh --limit-new-ok N --instance <id>   # smoke-test a single instance
 #
 # Smoke-test mode (--limit-new-ok): keep trying fresh instances one at a
 # time until N of them resolve successfully. --limit-max-try caps the total
-# number of NEW attempts (default 10).
+# number of NEW attempts (default 10). With --instance, restrict to that
+# single instance (smoke-test.sh uses this to pin a known-easy case).
 
 set -euo pipefail
 
@@ -42,6 +44,7 @@ MAX_INSTANCES=500
 MAX_WORKERS=4
 LIMIT_NEW_OK=""
 LIMIT_MAX_TRY=10
+SMOKE_INSTANCE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -49,12 +52,20 @@ while [[ $# -gt 0 ]]; do
     --limit-new-ok)    LIMIT_NEW_OK="$2"; shift 2 ;;
     --limit-max-try)   LIMIT_MAX_TRY="$2"; shift 2 ;;
     --max-instances)   MAX_INSTANCES="$2"; shift 2 ;;
+    --instance)        SMOKE_INSTANCE="$2"; shift 2 ;;
     -*)                echo "unknown option: $1" >&2; exit 1 ;;
     *)                 MAX_INSTANCES="${MAX_INSTANCES:-$1}"; shift ;;
   esac
 done
 
-RUN_ID="${RUN_ID:-${PROVIDER_ID}-$(date +%Y%m%d-%H%M%S)}"
+# Default to a fixed RUN_ID so re-running ./run.sh accumulates into the same
+# output directory. Both backends (mini-swe-agent and swebench harness) treat
+# existing artifacts (preds.json / report.json) as already done and skip them,
+# so repeated invocations of ./run.sh act as a resume — new instances get
+# processed, finished ones are left alone.
+#
+# Override per-run with `RUN_ID=experiment-42 ./run.sh` if you want isolation.
+RUN_ID="${RUN_ID:-run-1}"
 
 # ---------------------------------------------------------------- uv helpers
 # uv run auto-creates/syncs .venv from $REPO_ROOT/pyproject.toml+uv.lock on
@@ -118,13 +129,35 @@ wait_msa_clean() {
 # Keep trying fresh instances one at a time until $LIMIT_NEW_OK resolve.
 run_smoke() {
   echo "[smoke] target resolved: $LIMIT_NEW_OK, max attempts: $LIMIT_MAX_TRY"
+  if [[ -n "$SMOKE_INSTANCE" ]]; then
+    echo "[smoke] pinned instance: $SMOKE_INSTANCE"
+  fi
 
-  mapfile -t INSTANCE_IDS < <(py -c '
+  if [[ -n "$SMOKE_INSTANCE" ]]; then
+    # Pin to a single instance (smoke-test.sh uses this to test a known-easy
+    # case). Validate it exists in the dataset; bail early if not.
+    mapfile -t INSTANCE_IDS < <(py -c '
+import sys
+from datasets import load_dataset
+ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
+want = sys.argv[1]
+ids = [i for i in ds["instance_id"] if i == want]
+if not ids:
+    print(f"ERROR: instance {want!r} not found in SWE-bench Verified", file=sys.stderr)
+    sys.exit(2)
+for i in ids:
+    print(i)
+' "$SMOKE_INSTANCE")
+    [[ ${#INSTANCE_IDS[@]} -gt 0 ]] || exit 2
+    LIMIT_MAX_TRY=1
+  else
+    mapfile -t INSTANCE_IDS < <(py -c '
 from datasets import load_dataset
 ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
 for i in ds["instance_id"]:
     print(i)
 ')
+  fi
 
   local new_ok=0 tries=0 iid sub_run out_dir pred_file report
   for iid in "${INSTANCE_IDS[@]}"; do
@@ -163,8 +196,10 @@ for i in ds["instance_id"]:
     fi
 
     # mini-swe-agent does NOT write a results.json — read resolved status from
-    # the swebench harness per-instance report instead.
-    report="$WORKDIR/logs/run_evaluation/$sub_run/${LOG_MODEL_DIR}/$iid/report.json"
+    # the swebench harness per-instance report instead. The report lives at
+    # $PROVIDER_DIR/logs/run_evaluation/... (swebench's RUN_EVALUATION_LOG_DIR
+    # is a hardcoded relative path), NOT under $WORKDIR/logs/run_evaluation/.
+    report="$PROVIDER_DIR/logs/run_evaluation/$sub_run/${LOG_MODEL_DIR}/$iid/report.json"
     if [[ -s "$report" ]] && py -c '
 import json, sys
 data = json.load(open(sys.argv[1]))

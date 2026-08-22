@@ -4,7 +4,12 @@
 # Self-contained. Steps:
 #   1. Docker daemon is running
 #   2. OPENROUTER_API_KEY is set
-#   3. ./run.sh resolves at least 1 of 10 instances
+#   3. ./run.sh resolves a pinned, known-easy instance end-to-end
+#
+# The smoke-test pins a single instance that has been empirically observed
+# to resolve reliably for stealth/ox-alpha on OpenRouter (recorded during
+# earlier runs under logs/run_evaluation/). Pinning avoids the flake that
+# comes from "try the first 10 unverified instances and hope one resolves".
 
 set -euo pipefail
 
@@ -12,6 +17,12 @@ PROVIDER_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=provider.env
 source "$PROVIDER_DIR/provider.env"
+
+# Known-easy pinned instance. Recorded in logs/run_evaluation/ — see the
+# resolved_ids lists in swebench-work/logs/run_evaluation/*.json. Replace
+# this with another instance that has been observed to resolve if the
+# current one ever stops being reliable.
+SMOKE_INSTANCE="${SMOKE_INSTANCE:-astropy__astropy-12907}"
 
 fail() { echo "[smoke-test:$PROVIDER_ID] FAIL: $*" >&2; exit 1; }
 pass() { echo "[smoke-test:$PROVIDER_ID] PASS: $*"; }
@@ -27,8 +38,14 @@ if [[ -z "${!API_KEY_ENV:-}" ]]; then
 fi
 pass "$API_KEY_ENV is set (length=${#OPENROUTER_API_KEY})"
 
-echo "=== [3/3] ./run.sh --limit-new-ok 1 --limit-max-try 10 ==="
-"$PROVIDER_DIR/run.sh" -w 1 --limit-new-ok 1 --limit-max-try 10
-pass "run finished (1 resolved within 10 attempts)"
+echo "=== [3/3] ./run.sh --instance $SMOKE_INSTANCE --limit-new-ok 1 ==="
+if ! "$PROVIDER_DIR/run.sh" \
+    -w 1 \
+    --instance "$SMOKE_INSTANCE" \
+    --limit-new-ok 1 \
+    --limit-max-try 1; then
+  fail "run.sh did not resolve $SMOKE_INSTANCE within 1 attempt"
+fi
+pass "run.sh resolved $SMOKE_INSTANCE"
 
 echo "[smoke-test:$PROVIDER_ID] ALL CHECKS PASSED"

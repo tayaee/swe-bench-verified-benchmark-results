@@ -23,12 +23,6 @@ export OPENROUTER_API_KEY="sk-or-..."
 ./eval.sh                                 # score everything in the run
 ./report.sh | tee results.txt             # show resolved/failed/unresolved
 
-# Live monitoring while inference is still going (separate terminal)
-./report.sh --live                        # every 30s: auto-eval unscored + reprint
-
-# Just inspect what's there, without triggering new evals
-./report.sh --no-eval
-
 # Clean up
 ./clean.sh --docker                       # also purge leftover swebench containers
 ```

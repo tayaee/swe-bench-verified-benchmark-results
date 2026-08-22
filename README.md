@@ -1,6 +1,6 @@
 # SWE-bench Verified (local test results)
 
-SWE-bench Verified 500-instance benchmark runner with live scoring.
+SWE-bench Verified 500-instance benchmark
 
 ## stealth/ox-alpha (served by openrouter.ai)
 

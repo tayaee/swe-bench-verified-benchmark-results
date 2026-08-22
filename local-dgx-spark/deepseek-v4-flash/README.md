@@ -1,4 +1,4 @@
-# local/deepseek-v4-flash/
+# local-dgx-spark/deepseek-v4-flash/
 
 ## Instruction
 

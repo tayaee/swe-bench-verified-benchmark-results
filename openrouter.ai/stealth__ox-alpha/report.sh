@@ -340,10 +340,10 @@ non_resolved = completed - resolved             # = failed + unresolved + pendin
 
 print(f"  {TOTAL} total")
 print(f"     +-- {completed} completed")
-print(f"     |    +-- {resolved} resolved")
+print(f"     |    +-- {resolved} resolved (submitted correct answer)")
 print(f"     |    +-- {non_resolved} non-resolved")
 print(f"     |    |    +-- {failed} failed")
-print(f"     |    |    +-- {unresolved} unresolved")
+print(f"     |    |    +-- {unresolved} unresolved (submitted wrong answer)")
 print(f"     |    |    +-- {pending} in-progress or unknown")
 print(f"     +-- {unvisited} unvisited")
 suffix = "" if finished else " - in progress"

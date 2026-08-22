@@ -1,4 +1,4 @@
-Last updated: 2026-08-22T12:15:07-04:00
+Last updated: 2026-08-22T12:47:55-04:00
 [report] run=run-1: scoring 19 missing instance(s) via ./eval.sh
 [eval] run=run-1 workers=4 total=19 already_scored=0 to_score=19
 No instances to run.
@@ -20,12 +20,12 @@ Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/steal
 === SWE-bench Verified SCORE — provider: ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha ===
   run_id        : run-1
   500 total
-     +-- 113 completed
-     |    +-- 102 resolved
+     +-- 118 completed
+     |    +-- 107 resolved
      |    |   +-- 0 failed
      |    |   +-- 11 unresolved
-     |      +-- 19 in-progress
-     +-- 368 unvisited
-  progress       : 22.6% (113/500 completed/total)
-  score estimate : 90.3% (102/113 resolved/completed)
-  score final    : 20.4% (102/500 resolved/total) - in progress
+     |    +-- 19 in-progress or unknown
+     +-- 363 unvisited
+  progress       : 23.6% (118/500 completed/total)
+  score estimate : 90.7% (107/118 resolved/completed)
+  score final    : 21.4% (107/500 resolved/total) - in progress

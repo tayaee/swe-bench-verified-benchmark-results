@@ -1,18 +1,35 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-22T19:05:04-04:00 (14 hours 11 minutes)
+Last updated: 2026-08-22T19:50:22-04:00 (14 hours 56 minutes)
 
-[report] --no-eval set, skipping implicit eval
+[report] run=run-1: scoring 37 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=37 already_scored=0 to_score=37
+Running 3 instances...
+All instances run.
+Total instances: 37
+Instances submitted: 37
+Instances completed: 3
+Instances incomplete: 0
+Instances resolved: 3
+Instances unresolved: 0
+Instances with likely infrastructure failures: 0
+Instances with ambiguous failures: 0
+Instances with empty patches: 34
+Instances with errors: 0
+Unstopped containers: 1
+Unremoved images: 36
+Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/stealth__ox-alpha.run-1.json
+[eval] scored 37 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
   run_id        : run-1
   500 total
-     +-- 287 completed
-     |    +-- 230 resolved (submitted correct answer)
-     |    +-- 57 non-resolved
+     +-- 313 completed
+     |    +-- 258 resolved (submitted correct answer)
+     |    +-- 55 non-resolved
      |    |    +-- 0 failed
-     |    |    +-- 18 unresolved (submitted wrong answer)
-     |    |    +-- 39 in-progress or unknown
-     +-- 213 unvisited
-  progress       : 49.6% (248/500 completed/total) - in progress
-  score estimate : 92.7% (230/248 resolved/completed) - in progress
-  score final    : 46.0% (230/500 resolved/total) - in progress
+     |    |    +-- 19 unresolved (submitted wrong answer)
+     |    |    +-- 36 in-progress or unknown
+     +-- 187 unvisited
+  progress       : 55.4% (277/500 completed/total) - in progress
+  score estimate : 93.1% (258/277 resolved/completed) - in progress
+  score final    : 51.6% (258/500 resolved/total) - in progress

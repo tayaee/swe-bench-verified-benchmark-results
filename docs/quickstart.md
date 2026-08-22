@@ -88,13 +88,6 @@ uv run --project . swebench report <run_id>
 ```
 이미 저장된 `test_output.txt`로부터 verdict만 다시 매김. 로그 파서 고친 직후에 유용.
 
-**Q. predictions만 다시 생성 (평가 건너뛰기)?**
-```bash
-uv run --project . python predict.py \
-  --out swebench-work/predictions/full.jsonl \
-  --model stealth/ox-alpha
-```
-
 **Q. 어디서 더 봐요?**
 - 상세 사용법: [`README.md`](README.md)
 - 평가 헬퍼: [`eval.sh`](eval.sh)

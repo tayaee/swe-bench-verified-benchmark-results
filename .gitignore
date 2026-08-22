@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# test
+swebench-work/
+
+# ds4-server logs (serve/ds4-serve-with-watchdog.sh writes here)
+local/deepseek-v4-flash/serve/logs/
+
+# Per-provider runtime artifacts (each provider has its own swebench-work/)
+openrouter.ai/stealth__ox-alpha/swebench-work/
+local/deepseek-v4-flash/swebench-work/

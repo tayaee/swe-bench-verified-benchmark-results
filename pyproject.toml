@@ -1,5 +1,5 @@
 [project]
-name = "ox-alpha-swebench-verified"
+name = "run-swebench-verified"
 version = "0.1.0"
 description = "Run the ox-alpha model (openrouter.ai) on SWE-bench Verified with live scoring"
 requires-python = ">=3.10"

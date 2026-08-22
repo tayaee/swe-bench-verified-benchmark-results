@@ -1,14 +1,8 @@
-# swebench.yaml — mini-swe-agent config for SWE-bench Verified with ox-alpha (OpenRouter).
+# msa.yaml — mini-swe-agent config for SWE-bench Verified with stealth/ox-alpha (OpenRouter).
 #
-# Used via:
-#   python -m minisweagent.run.benchmarks.swebench -c swebench.yaml ...
-#
-# This file is an *override* on top of the default config at
-# minisweagent/config/benchmarks/swebench.yaml. It only changes the bits we need
-# to swap the model + cost tracking; the agent/environment templates stay default.
-#
-# Note: --config / -c replaces the default config unless you pass the default
-# file explicitly, so we re-include the defaults that matter (step_limit, etc.).
+# Override passed to mini-swe-agent via -c (merged with the package default at
+# minisweagent/config/benchmarks/swebench.yaml). Only changes model + cost
+# tracking; agent/environment templates stay default.
 
 agent:
   step_limit: 250       # max model turns per instance (default: 250)

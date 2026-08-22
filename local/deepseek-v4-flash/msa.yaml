@@ -1,0 +1,24 @@
+# msa.yaml — mini-swe-agent config for SWE-bench Verified with ds4-server / DeepSeek-V4-Flash.
+#
+# Override passed to mini-swe-agent via -c (merged with the package default at
+# minisweagent/config/benchmarks/swebench.yaml). The OpenAIModel class (set via
+# --model-class on the CLI) reads OPENAI_API_BASE and OPENAI_API_KEY from env,
+# so we don't repeat them in model_kwargs.
+
+agent:
+  step_limit: 250       # max model turns per instance (default: 250)
+  cost_limit: 3.0       # USD cap per instance (default: 3.0)
+
+environment:
+  timeout: 60           # shell command timeout (s)
+
+model:
+  # "openai/" prefix routes through OpenAIModel, which honors OPENAI_API_BASE
+  # and OPENAI_API_KEY env vars at request time. Keep api_base/api_key out of
+  # model_kwargs — the env vars (set by run.sh from provider.env) are the
+  # single source of truth.
+  model_name: "openai/deepseek-v4-flash"
+  model_kwargs:
+    drop_params: true   # ds4-server may not implement every litellm param
+  # Local model has no entry in OpenAIModel cost tables → suppress.
+  cost_tracking: "ignore_errors"

@@ -261,7 +261,9 @@ if done == 0:
 
 TOTAL = 500
 
-# Count predictions for the run to derive in-progress vs unvisited.
+# Count predictions for the run. Preds without an eval report are of
+# unknown status from here — queued, currently running, or lost — so we
+# can't tell them apart; label them honestly as in-progress/unknown.
 n_preds = 0
 if run_id is not None:
     preds_path = os.path.join(workdir, "runs", run_id, "preds.json")
@@ -271,12 +273,12 @@ if run_id is not None:
             n_preds = len(preds) if hasattr(preds, "__len__") else 0
         except Exception:
             n_preds = 0
-in_progress = max(n_preds - done, 0)
-unvisited = TOTAL - done - in_progress
+pending = max(n_preds - done, 0)
+unvisited = TOTAL - done - pending
 
 pct = lambda num, den: f"{100.0 * num / den:.1f}%"
 est = pct(resolved, done) if done else "n/a"
-finished = in_progress == 0 and unvisited == 0
+finished = pending == 0 and unvisited == 0
 print(f"\n=== SWE-bench Verified SCORE — provider: {provider_dir} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
@@ -286,7 +288,7 @@ print(f"     +-- {done} completed")
 print(f"     |    +-- {resolved} resolved")
 print(f"     |    |   +-- {failed} failed")
 print(f"     |    |   +-- {unresolved} unresolved")
-print(f"     |      +-- {in_progress} in-progress")
+print(f"     |    +-- {pending} in-progress or unknown")
 print(f"     +-- {unvisited} unvisited")
 print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total)")
 print(f"  score estimate : {est} ({resolved}/{done} resolved/completed)")

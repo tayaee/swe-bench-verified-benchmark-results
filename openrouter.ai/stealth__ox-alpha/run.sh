@@ -94,6 +94,27 @@ run_inference() {
 }
 
 # ---------------------------------------------------------------- smoke mode
+# Wait for any leftover minisweagent-* container to be cleaned up.
+#
+# msa's DockerEnvironment.cleanup() runs `docker stop` in the background
+# (subprocess.Popen + &), so a container can briefly outlive the
+# inference process. The smoke loop's invariant is at most one docker
+# container at a time; without this wait, the eval container and the
+# still-stopping inference container overlap. We poll docker ps with a
+# short timeout — if cleanup stalls we log a warning and proceed so a
+# stuck container doesn't deadlock the smoke test.
+wait_msa_clean() {
+  local i=60
+  while (( i-- > 0 )); do
+    if ! docker ps -q --filter "name=minisweagent" 2>/dev/null | grep -q .; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[smoke] warning: minisweagent container(s) still alive after 60s" >&2
+  return 1
+}
+
 # Keep trying fresh instances one at a time until $LIMIT_NEW_OK resolve.
 run_smoke() {
   echo "[smoke] target resolved: $LIMIT_NEW_OK, max attempts: $LIMIT_MAX_TRY"
@@ -120,6 +141,9 @@ for i in ds["instance_id"]:
       echo "[smoke] inference failed for $iid, trying next"
       continue
     fi
+    # msa cleans up its docker container in the background; wait it out
+    # before starting eval so we never have two containers at once.
+    wait_msa_clean
 
     pred_file="$out_dir/preds.json"
     if [[ ! -s "$pred_file" ]]; then

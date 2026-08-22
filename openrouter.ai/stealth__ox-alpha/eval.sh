@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
-# eval.sh — Score swebench harness logs for stealth/ox-alpha runs.
+# eval.sh — Score stealth/ox-alpha predictions with swebench eval.
 #
-# Self-contained. Swebench log layout (default swebench eval output):
-#   $WORKDIR/logs/run_evaluation/<run_id>/<model>__/<instance_id>/report.json
-# (<model>__ has "__" because the harness substitutes "/" with "__" in path segments.)
+# Self-contained. Runs `swebench eval` on $WORKDIR/runs/<run_id>/preds.json
+# and produces per-instance report.json files. Idempotent: instances that
+# already have a report.json are skipped, so repeated invocations act as a
+# resume. Designed to be called by ./run.sh (smoke mode), ./report.sh
+# (live orchestration), or directly.
+#
+# Swebench log layout (HARDCODED relative path inside the harness):
+#   $PROVIDER_DIR/logs/run_evaluation/<run_id>/<model>__/<instance_id>/report.json
+# (<model>__ has "__" because the harness substitutes "/" with "__" in path
+# segments.) The --report-dir flag only controls the run-summary JSON, NOT
+# the per-instance reports.
 #
 # Usage:
-#   ./eval.sh                 # score the newest run for this provider
-#   ./eval.sh <run_id>        # score one run
-#   ./eval.sh --all           # aggregate every run under logs/
-#   ./eval.sh --live [run_id] # poll every 30 s (parent exit stops it)
+#   ./eval.sh                       # --latest: newest run with preds.json
+#   ./eval.sh <run_id>              # specific run (positional or --run-id)
+#   ./eval.sh --instance <id> [...] # score only these instances (repeatable)
+#   ./eval.sh --all                 # score every instance in preds.json
+#   ./eval.sh --workers N           # default 4
 
 set -euo pipefail
 
@@ -20,170 +29,119 @@ WORKDIR="$PROVIDER_DIR/swebench-work"
 # shellcheck source=provider.env
 source "$PROVIDER_DIR/provider.env"
 
-# swebench writes per-instance reports (report.json) under a HARDCODED
-# `logs/run_evaluation/` relative path in the harness constants, regardless
-# of --report-dir (which only controls the run-summary JSON). The actual
-# per-instance logs therefore land at $PROVIDER_DIR/logs/run_evaluation,
-# not under $WORKDIR — reading from the latter yields an empty report list.
-LOG_BASE="$PROVIDER_DIR/logs/run_evaluation"
-INTERVAL=30
+# Per-instance reports land under $WORKDIR/logs/run_evaluation because
+# `sb eval` runs with cwd=$WORKDIR (see "invoke sb eval" below).
+LOG_BASE="$WORKDIR/logs/run_evaluation"
 
-py() { uv run --project "$REPO_ROOT" python "$@"; }
-
-MODE="once"
-TARGET="--latest"
+MAX_WORKERS=4
+RUN_ID=""
+INSTANCE_IDS=()
+USE_ALL=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --live) MODE="live"; TARGET="${2:---latest}"; shift 2 ;;
-    --all)  TARGET="--all"; shift ;;
-    -*)     echo "unknown option: $1" >&2; exit 1 ;;
-    *)      TARGET="$1"; shift ;;
+    --workers|-w) MAX_WORKERS="$2"; shift 2 ;;
+    --instance)   INSTANCE_IDS+=("$2"); shift 2 ;;
+    --run-id)     RUN_ID="$2"; shift 2 ;;
+    --all)        USE_ALL=true; shift ;;
+    --latest)     : ;;  # default behavior; kept for explicit usage
+    -*)           echo "unknown option: $1" >&2; exit 1 ;;
+    *)            RUN_ID="${RUN_ID:-$1}"; shift ;;
   esac
 done
 
-score_once() {
-  # Args: LOG_BASE TARGET PROVIDER_DIR WORKDIR PROVIDER_ID
-  py - "$LOG_BASE" "$TARGET" "$PROVIDER_DIR" "$WORKDIR" "$PROVIDER_ID" <<'EOF'
-import glob, json, os, sys
+py() { uv run --project "$REPO_ROOT" python "$@"; }
+sb() { uv run --project "$REPO_ROOT" swebench "$@"; }
 
-log_base, target, provider_dir, workdir, provider_id = sys.argv[1:6]
-
-try:
-    from swebench.metrics.report import get_eval_report_from_map  # newer API
-except Exception:
-    get_eval_report_from_map = None
-try:
-    from swebench.harness.run_evaluation import get_eval_report  # older API
-except Exception:
-    get_eval_report = None
-
-# ---------------------------------------------------------------- run-id resolution
-# Resolve which run we are scoring, plus the list of per-instance report.json
-# files. After this block: `run_id` is the canonical run name (or None for
-# --all), `report_files` is the glob of per-instance report.json paths.
-run_id = None
-report_files = []
-
-if target == "--all":
-    report_files = sorted(glob.glob(os.path.join(log_base, "*", "*", "*", "report.json")))
-elif target == "--latest":
-    runs = []
-    if os.path.isdir(log_base):
-        runs = sorted(d for d in os.listdir(log_base)
-                      if os.path.isdir(os.path.join(log_base, d)))
-    if runs:
-        run_id = runs[-1]
-        report_files = sorted(glob.glob(os.path.join(log_base, runs[-1], "*", "*", "report.json")))
-    else:
-        # No per-instance log dirs (e.g. smoke test artefacts deleted). Pick the
-        # newest run dir under WORKDIR/runs/ as the "latest" candidate.
-        runs_dir = os.path.join(workdir, "runs")
-        if os.path.isdir(runs_dir):
-            cands = []
-            for d in os.listdir(runs_dir):
-                p = os.path.join(runs_dir, d, "preds.json")
-                if os.path.isfile(p):
-                    cands.append((os.path.getmtime(p), d))
-            if cands:
-                cands.sort()
-                run_id = cands[-1][1]
-else:
-    run_id = target
-    if os.path.isdir(log_base):
-        report_files = sorted(glob.glob(os.path.join(log_base, target, "*", "*", "report.json")))
-
-# ---------------------------------------------------------------- aggregate reports
-resolved = failed = unresolved = 0
-for report_path in report_files:
-    test_out = os.path.join(os.path.dirname(report_path), "test_output.txt")
-    inst_id = os.path.basename(os.path.dirname(test_out))
-    try:
-        if os.path.exists(report_path):
-            rep = json.load(open(report_path))
-        elif get_eval_report is not None:
-            rep = get_eval_report(
-                {"instance_id": inst_id, "model_patch": ""},
-                None, test_out, apply_test_patch=False, log_dir=log_base,
-            )
-        else:
-            continue
-    except Exception:
-        continue
-
-    inst = rep.get(inst_id)
-    if not isinstance(inst, dict):
-        inst = rep  # legacy fallback
-
-    if inst.get("resolved"):
-        resolved += 1
-    elif inst.get("test_status") or inst.get("failure_report"):
-        failed += 1
-    else:
-        unresolved += 1
-
-# ---------------------------------------------------------------- fallback 1: run-summary JSON
-# swebench writes a single `<provider_id>.<run_id>.json` summary next to the
-# per-instance reports. Use it when per-instance reports are absent.
-fallback_note = None
-if (resolved + failed + unresolved) == 0 and run_id is not None:
-    summary_path = os.path.join(
-        workdir, "logs", "run_evaluation", f"{provider_id}.{run_id}.json"
-    )
-    if os.path.exists(summary_path):
-        try:
-            data = json.load(open(summary_path))
-            resolved = int(data.get("resolved_instances", 0))
-            completed = int(data.get("completed_instances", 0))
-            unresolved = max(completed - resolved, 0)
-            fallback_note = f"used run-summary {os.path.basename(summary_path)}"
-        except Exception:
-            pass
-
-# ---------------------------------------------------------------- fallback 2: preds.json
-# Final fallback: if no eval ran (or was deleted), count predictions in
-# WORKDIR/runs/<run_id>/preds.json and report them as unresolved. This lets
-# `./eval.sh run-1` show the inference footprint even before `sb eval` finishes.
-if (resolved + failed + unresolved) == 0 and run_id is not None:
-    preds_path = os.path.join(workdir, "runs", run_id, "preds.json")
-    if os.path.exists(preds_path):
-        try:
-            preds = json.load(open(preds_path))
-            n = len(preds) if hasattr(preds, "__len__") else 0
-            if n > 0:
-                unresolved = n
-                fallback_note = (
-                    f"no report.json or run-summary found — counted {n} "
-                    f"prediction(s) in runs/{run_id}/preds.json as "
-                    f"unresolved. Run 'sb eval' to actually evaluate them."
-                )
-        except Exception:
-            pass
-
-done = resolved + failed + unresolved
-if done == 0:
-    sys.exit(0)
-
-pct = lambda n: f"{n} ({100.0 * n / done:.1f}%)"
-print(f"\n=== SWE-bench Verified SCORE — provider: {provider_dir} ===")
-print(f"  run_id        : {run_id or '(all)'}")
-if fallback_note:
-    print(f"  note          : {fallback_note}")
-print(f"  completed     : {done}")
-print(f"  resolved      : {pct(resolved)}")
-print(f"  failed        : {pct(failed)}")
-print(f"  unresolved    : {pct(unresolved)}")
-print(f"  resolved rate : {resolved}/{done}")
-print(f"  score         : {resolved}/500")
-EOF
-}
-
-if [[ "$MODE" == "live" ]]; then
-  echo "[eval] live scoring every ${INTERVAL}s (ctrl-c or parent exit stops it)"
-  while true; do
-    score_once || true
-    sleep "$INTERVAL"
-  done
-else
-  score_once
+# ---------------------------------------------------------------- resolve run-id
+# Precedence: positional/--run-id > --latest (preds.json mtime newest).
+if [[ -z "$RUN_ID" ]]; then
+  runs_dir="$WORKDIR/runs"
+  if [[ ! -d "$runs_dir" ]]; then
+    echo "error: no runs directory at $runs_dir" >&2
+    exit 1
+  fi
+  cands=()
+  while IFS= read -r -d '' d; do
+    [[ -f "$d/preds.json" ]] && cands+=("$(stat -c %Y "$d/preds.json" 2>/dev/null || echo 0)|$(basename "$d")")
+  done < <(find "$runs_dir" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+  if [[ ${#cands[@]} -eq 0 ]]; then
+    echo "error: no preds.json found under $runs_dir" >&2
+    exit 1
+  fi
+  RUN_ID=$(printf '%s\n' "${cands[@]}" | sort -t'|' -k1nr | head -1 | cut -d'|' -f2-)
 fi
+
+pred_file="$WORKDIR/runs/$RUN_ID/preds.json"
+if [[ ! -f "$pred_file" ]]; then
+  echo "error: no preds.json at $pred_file (run '$RUN_ID' not found)" >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------- resolve instance list
+# Precedence: explicit --instance > --all > preds.json contents.
+if [[ ${#INSTANCE_IDS[@]} -gt 0 ]]; then
+  : # caller-supplied subset
+elif $USE_ALL; then
+  mapfile -t INSTANCE_IDS < <(py -c '
+import json, sys
+preds = json.load(open(sys.argv[1]))
+# preds.json may be either a list of {instance_id, ...} or a dict
+# {instance_id: prediction_data}; support both.
+if isinstance(preds, dict):
+    print("\n".join(preds.keys()))
+else:
+    print("\n".join(p["instance_id"] for p in preds))
+' "$pred_file")
+else
+  mapfile -t INSTANCE_IDS < <(py -c '
+import json, sys
+preds = json.load(open(sys.argv[1]))
+if isinstance(preds, dict):
+    print("\n".join(preds.keys()))
+else:
+    print("\n".join(p["instance_id"] for p in preds))
+' "$pred_file")
+fi
+
+if [[ ${#INSTANCE_IDS[@]} -eq 0 ]]; then
+  echo "[eval] run $RUN_ID has no predictions to score"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- idempotent skip
+# Skip instances whose per-instance report.json already exists under the
+# HARDCODED log path. This makes repeated ./eval.sh invocations a resume.
+to_eval=()
+skipped=0
+for iid in "${INSTANCE_IDS[@]}"; do
+  report="$LOG_BASE/$RUN_ID/$LOG_MODEL_DIR/$iid/report.json"
+  if [[ -s "$report" ]]; then
+    skipped=$((skipped + 1))
+  else
+    to_eval+=("$iid")
+  fi
+done
+
+echo "[eval] run=$RUN_ID workers=$MAX_WORKERS total=${#INSTANCE_IDS[@]} already_scored=$skipped to_score=${#to_eval[@]}"
+
+if [[ ${#to_eval[@]} -eq 0 ]]; then
+  echo "[eval] all instances already scored — nothing to do"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- invoke sb eval
+# Pass --report-dir only for the run-summary JSON. Per-instance reports land
+# under $PROVIDER_DIR/logs/run_evaluation regardless (see header comment).
+cd "$WORKDIR"
+eval_args=(verified
+           --predictions "$pred_file"
+           --run-id "$RUN_ID"
+           --workers "$MAX_WORKERS"
+           --report-dir "$WORKDIR/logs/run_evaluation")
+for iid in "${to_eval[@]}"; do
+  eval_args+=(--instance "$iid")
+done
+
+sb eval "${eval_args[@]}"
+echo "[eval] scored ${#to_eval[@]} instance(s) — reports at $LOG_BASE/$RUN_ID/"

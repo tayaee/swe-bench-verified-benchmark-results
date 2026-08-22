@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# run.sh — Run stealth/ox-alpha (OpenRouter) on SWE-bench Verified.
+# run.sh — Run stealth/ox-alpha (OpenRouter) inference on SWE-bench Verified.
 #
 # Self-contained: sources only files in this directory and the project
 # root's pyproject.toml (uv-managed dependency manifest). No other scripts
 # outside this directory are referenced.
+#
+# Responsibility split across this directory:
+#   ./run.sh     — inference (msa) → runs/<run_id>/preds.json
+#   ./eval.sh    — scoring   (swebench eval) → logs/run_evaluation/<run_id>/...
+#   ./report.sh  — reporting + orchestration (calls eval.sh for missing items)
 #
 # Usage:
 #   ./run.sh                          # all 500 instances, 4 workers
@@ -184,22 +189,22 @@ for i in ds["instance_id"]:
       continue
     fi
 
-    # step 2: evaluation
-    if ! sb eval verified \
-        --predictions "$pred_file" \
+    # step 2: evaluation (delegated to ./eval.sh so idempotent skip
+    # semantics live in one place — see eval.sh header)
+    if ! "$PROVIDER_DIR/eval.sh" \
         --run-id "$sub_run" \
         --instance "$iid" \
-        --workers "$MAX_WORKERS" \
-        --report-dir "$WORKDIR/logs/run_evaluation"; then
+        --workers "$MAX_WORKERS"; then
       echo "[smoke] harness failed for $iid, trying next"
       continue
     fi
 
-    # mini-swe-agent does NOT write a results.json — read resolved status from
-    # the swebench harness per-instance report instead. The report lives at
-    # $PROVIDER_DIR/logs/run_evaluation/... (swebench's RUN_EVALUATION_LOG_DIR
-    # is a hardcoded relative path), NOT under $WORKDIR/logs/run_evaluation/.
-    report="$PROVIDER_DIR/logs/run_evaluation/$sub_run/${LOG_MODEL_DIR}/$iid/report.json"
+    # mini-swe-agent does NOT write a results.json — read resolved status
+    # from the swebench harness per-instance report instead. eval.sh writes
+    # it under $WORKDIR/logs/run_evaluation/<run>/<model>/<iid>/report.json
+    # because it runs `sb eval` with cwd=$WORKDIR (the path is relative to
+    # cwd in the swebench harness constants).
+    report="$WORKDIR/logs/run_evaluation/$sub_run/${LOG_MODEL_DIR}/$iid/report.json"
     if [[ -s "$report" ]] && py -c '
 import json, sys
 data = json.load(open(sys.argv[1]))
@@ -217,8 +222,10 @@ sys.exit(0 if inst.get("resolved") else 1)
 }
 
 # ---------------------------------------------------------------- full run
-# Production pipeline: inference over all $MAX_INSTANCES instances, then
-# evaluation, with live scoring printed in the background.
+# Production pipeline: inference over all $MAX_INSTANCES instances. Eval and
+# reporting are decoupled — invoke ./eval.sh to score, then ./report.sh to
+# view (or run ./report.sh --live in another terminal to see scores as they
+# land).
 run_full() {
   cd "$WORKDIR"
 
@@ -239,28 +246,10 @@ for i in ds["instance_id"]:
   fi
   run_inference "$out_dir" "${msa_args[@]}"
 
-  # step 2: evaluation
-  local pred_file="$out_dir/preds.json"
-  local -a eval_args=(verified --predictions "$pred_file" --run-id "$RUN_ID" \
-                           --workers "$MAX_WORKERS" \
-                           --report-dir "$WORKDIR/logs/run_evaluation")
-  if [[ -n "$MAX_INSTANCES" ]]; then
-    local iid
-    for iid in $first_ids; do eval_args+=(--instance "$iid"); done
-  fi
-
-  # live score in background while evaluation runs
-  "$PROVIDER_DIR/eval.sh" --live "$RUN_ID" &
-  local live_pid=$!
-  trap 'kill "$live_pid" 2>/dev/null || true' EXIT
-
-  sb eval "${eval_args[@]}"
-
-  wait "$live_pid" 2>/dev/null || true
-  trap - EXIT
-
-  echo "[done] final reports: $WORKDIR/logs/run_evaluation/$LOG_MODEL_DIR/$RUN_ID/"
   echo "[done] trajectories : $out_dir/"
+  echo "[next] ./eval.sh        # 채점 (swebench eval)"
+  echo "       ./report.sh      # 보고서 (eval.sh 자동 호출)"
+  echo "       ./report.sh --live  # 추론 중 다른 창에서 실시간 점수"
 }
 
 # ---------------------------------------------------------------- dispatch

@@ -1,0 +1,10 @@
+
+=== SWE-bench Verified SCORE — provider: /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha ===
+  run_id        : run-1
+  note          : no report.json or run-summary found — counted 2 prediction(s) in runs/run-1/preds.json as unresolved. Run 'sb eval' to actually evaluate them.
+  completed     : 2
+  resolved      : 0 (0.0%)
+  failed        : 0 (0.0%)
+  unresolved    : 2 (100.0%)
+  resolved rate : 0/2
+  score         : 0/500

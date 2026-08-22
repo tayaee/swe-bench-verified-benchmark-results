@@ -264,8 +264,8 @@ print(f"  completed     : {done}")
 print(f"  resolved      : {pct(resolved)}")
 print(f"  failed        : {pct(failed)}")
 print(f"  unresolved    : {pct(unresolved)}")
-print(f"  resolved rate : {resolved}/{done}")
-print(f"  score         : {resolved}/500")
+print(f"  resolved rate : {resolved}/{done} (resolved/completed)")
+print(f"  score         : {resolved}/500 ({100.0 * resolved / 500:.1f}%)")
 EOF
 }
 

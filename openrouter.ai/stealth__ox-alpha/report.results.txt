@@ -1,18 +1,18 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-22T18:50:43-04:00 (13 hours 57 minutes)
+Last updated: 2026-08-22T18:56:11-04:00 (14 hours 2 minutes)
 
 [report] --no-eval set, skipping implicit eval
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
   run_id        : run-1
   500 total
-     +-- 282 completed
-     |    +-- 225 resolved
-     |    +-- 57 non-resolved
+     +-- 285 completed
+     |    +-- 229 resolved (submitted correct answer)
+     |    +-- 56 non-resolved
      |    |    +-- 0 failed
-     |    |    +-- 18 unresolved
-     |    |    +-- 39 in-progress or unknown
-     +-- 218 unvisited
-  progress       : 48.6% (243/500 completed/total) - in progress
-  score estimate : 92.6% (225/243 resolved/completed) - in progress
-  score final    : 45.0% (225/500 resolved/total) - in progress
+     |    |    +-- 18 unresolved (submitted wrong answer)
+     |    |    +-- 38 in-progress or unknown
+     +-- 215 unvisited
+  progress       : 49.4% (247/500 completed/total) - in progress
+  score estimate : 92.7% (229/247 resolved/completed) - in progress
+  score final    : 45.8% (229/500 resolved/total) - in progress

@@ -11,6 +11,7 @@ wheels/
 
 # test
 swebench-work/
+logs/
 
 # ds4-server logs (serve/ds4-serve-with-watchdog.sh writes here)
 local/deepseek-v4-flash/serve/logs/

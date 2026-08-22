@@ -1,0 +1,14 @@
+[project]
+name = "ox-alpha-swebench-verified"
+version = "0.1.0"
+description = "Run the ox-alpha model (openrouter.ai) on SWE-bench Verified with live scoring"
+requires-python = ">=3.10"
+dependencies = [
+    "swebench[all]",
+    "litellm",
+    "datasets",
+]
+
+[tool.uv]
+# heavy eval harness; keep the venv local to this project
+package = false

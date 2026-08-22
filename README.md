@@ -1,20 +1,17 @@
-# run-swebench-verified
+# SWE-bench Verified (local test results)
 
 SWE-bench Verified 500-instance benchmark runner with live scoring.
 
-## stealth/ox-alpha (OpenRouter)
+## stealth/ox-alpha (served by openrouter.ai)
 
 ### Instruction
 ```bash
-cd openrouter.ai/stealth__ox-alpha
 export OPENROUTER_API_KEY="sk-or-..."
-
-./smoke-test.sh      # 5-15 min, single-instance full cycle
-./clean.sh           # remove reports only
-./run.sh             # 500 instances, 4 workers
-./eval.sh --live     # live scoring in another terminal
-./clean.sh --docker  # final cleanup
+cd openrouter.ai/stealth__ox-alpha
+./smoke-test.sh      # solve 1 question to check the pipeline
+./clean.sh           # remove all reports
+./run.sh             # inference
+./eval.sh            # scoring in another terminal
+./report.sh          # reporting
+./clean.sh --docker  # remove all reports and docker containers
 ```
-
-### Results
-TBD

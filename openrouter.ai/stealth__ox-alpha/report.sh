@@ -22,6 +22,42 @@ PROVIDER_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$PROVIDER_DIR/../.." && pwd)"
 WORKDIR="$PROVIDER_DIR/swebench-work"
 
+# ---------------------------------------------------------------- run timestamps
+# Print the earliest/latest mtime of experiment result files (per-instance
+# .traj.json) under swebench-work/runs/run-1 in America/New_York timezone,
+# second-precision ISO-8601. Top-level minisweagent.log / preds.json /
+# exit_statuses_*.yaml are eval/orchestration artefacts and are excluded.
+print_run_timestamps() {
+  local runs_root="$WORKDIR/runs/run-1" line earliest="" latest=""
+  [ -d "$runs_root" ] || return 0
+  while IFS= read -r line; do
+    [ -z "$earliest" ] && earliest="$line"
+    latest="$line"
+  done < <(find "$runs_root" -mindepth 2 -type f -name '*.traj.json' \
+              -exec stat -c '%Y' {} + 2>/dev/null | sort -n)
+  [ -z "$earliest" ] && return 0
+  # Elapsed since Test started, to the minute (days omitted if 0, singular handled).
+  local elapsed=$((latest - earliest))
+  local days=$((elapsed / 86400))
+  local hours=$(( (elapsed % 86400) / 3600 ))
+  local minutes=$(( (elapsed % 3600) / 60 ))
+  local unit parts=()
+  if [ "$days" -gt 0 ]; then
+    unit=$( [ "$days" -eq 1 ] && echo day || echo days )
+    parts+=("$days $unit")
+  fi
+  if [ "$hours" -gt 0 ]; then
+    unit=$( [ "$hours" -eq 1 ] && echo hour || echo hours )
+    parts+=("$hours $unit")
+  fi
+  unit=$( [ "$minutes" -eq 1 ] && echo minute || echo minutes )
+  parts+=("$minutes $unit")
+  TZ='America/New_York' date +'Test started: %Y-%m-%dT%H:%M:%S%:z' -d "@$earliest"
+  TZ='America/New_York' date +"Last updated: %Y-%m-%dT%H:%M:%S%:z (${parts[*]})" -d "@$latest"
+  echo ""
+}
+print_run_timestamps
+
 # shellcheck source=provider.env
 source "$PROVIDER_DIR/provider.env"
 
@@ -276,10 +312,22 @@ if run_id is not None:
 pending = max(n_preds - done, 0)
 unvisited = TOTAL - done - pending
 
+# ---------------------------------------------------------------- header
+# Parse the provider dir into infra / model-provider / model. Expected
+# layout: .../<infra>/<model_provider>__<model>. Falls back to the raw
+# path when it doesn't match so nothing breaks.
+parts = os.path.normpath(provider_dir).split(os.sep)
+infra = parts[-2] if len(parts) >= 2 else None
+model_provider, _, model = parts[-1].partition("__") if parts else (None, "", None)
+if infra and model and model_provider:
+    provider_desc = f"infra:{infra}, model_provider:{model_provider}, model:{model}"
+else:
+    provider_desc = f"provider: {provider_dir}"
+
 pct = lambda num, den: f"{100.0 * num / den:.1f}%"
 est = pct(resolved, done) if done else "n/a"
 finished = pending == 0 and unvisited == 0
-print(f"\n=== SWE-bench Verified SCORE — provider: {provider_dir} ===")
+print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
@@ -290,9 +338,9 @@ print(f"     |    |   +-- {failed} failed")
 print(f"     |    |   +-- {unresolved} unresolved")
 print(f"     |    +-- {pending} in-progress or unknown")
 print(f"     +-- {unvisited} unvisited")
-print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total)")
-print(f"  score estimate : {est} ({resolved}/{done} resolved/completed)")
 suffix = "" if finished else " - in progress"
+print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total){suffix}")
+print(f"  score estimate : {est} ({resolved}/{done} resolved/completed){suffix}")
 print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")
 EOF
 }

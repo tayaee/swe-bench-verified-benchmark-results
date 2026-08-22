@@ -133,8 +133,12 @@ else:
 }
 
 # ---------------------------------------------------------------- aggregate
+# Provider label relative to ~/git (falls back to absolute path).
+PROVIDER_LABEL="$PROVIDER_DIR"
+[[ "$PROVIDER_DIR" == "$HOME/git/"* ]] && PROVIDER_LABEL="${PROVIDER_DIR#"$HOME/git/"}"
+
 score_once() {
-  py - "$LOG_BASE" "$TARGET" "$PROVIDER_DIR" "$WORKDIR" "$PROVIDER_ID" <<'EOF'
+  py - "$LOG_BASE" "$TARGET" "$PROVIDER_LABEL" "$WORKDIR" "$PROVIDER_ID" <<'EOF'
 import glob, json, os, sys
 
 log_base, target, provider_dir, workdir, provider_id = sys.argv[1:6]
@@ -255,17 +259,39 @@ done = resolved + failed + unresolved
 if done == 0:
     sys.exit(0)
 
-pct = lambda n: f"{n} ({100.0 * n / done:.1f}%)"
+TOTAL = 500
+
+# Count predictions for the run to derive in-progress vs unvisited.
+n_preds = 0
+if run_id is not None:
+    preds_path = os.path.join(workdir, "runs", run_id, "preds.json")
+    if os.path.exists(preds_path):
+        try:
+            preds = json.load(open(preds_path))
+            n_preds = len(preds) if hasattr(preds, "__len__") else 0
+        except Exception:
+            n_preds = 0
+in_progress = max(n_preds - done, 0)
+unvisited = TOTAL - done - in_progress
+
+pct = lambda num, den: f"{100.0 * num / den:.1f}%"
+est = pct(resolved, done) if done else "n/a"
+finished = in_progress == 0 and unvisited == 0
 print(f"\n=== SWE-bench Verified SCORE — provider: {provider_dir} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
-print(f"  completed     : {done}")
-print(f"  resolved      : {pct(resolved)}")
-print(f"  failed        : {pct(failed)}")
-print(f"  unresolved    : {pct(unresolved)}")
-print(f"  resolved rate : {resolved}/{done} (resolved/completed)")
-print(f"  score         : {resolved}/500 ({100.0 * resolved / 500:.1f}%)")
+print(f"  {TOTAL} total")
+print(f"     +-- {done} completed")
+print(f"     |    +-- {resolved} resolved")
+print(f"     |    |   +-- {failed} failed")
+print(f"     |    |   +-- {unresolved} unresolved")
+print(f"     |      +-- {in_progress} in-progress")
+print(f"     +-- {unvisited} unvisited")
+print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total)")
+print(f"  score estimate : {est} ({resolved}/{done} resolved/completed)")
+suffix = "" if finished else " - in progress"
+print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")
 EOF
 }
 

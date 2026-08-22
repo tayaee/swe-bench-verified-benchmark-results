@@ -1,33 +1,33 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-22T15:32:17-04:00 (10 hours 38 minutes)
+Last updated: 2026-08-22T15:35:41-04:00 (10 hours 42 minutes)
 
-[report] run=run-1: scoring 24 missing instance(s) via ./eval.sh
-[eval] run=run-1 workers=4 total=24 already_scored=0 to_score=24
+[report] run=run-1: scoring 26 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=26 already_scored=0 to_score=26
 No instances to run.
-Total instances: 24
-Instances submitted: 24
+Total instances: 26
+Instances submitted: 26
 Instances completed: 0
 Instances incomplete: 0
 Instances resolved: 0
 Instances unresolved: 0
 Instances with likely infrastructure failures: 0
 Instances with ambiguous failures: 0
-Instances with empty patches: 24
+Instances with empty patches: 26
 Instances with errors: 0
 Unstopped containers: 1
-Unremoved images: 24
+Unremoved images: 26
 Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/stealth__ox-alpha.run-1.json
-[eval] scored 24 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
+[eval] scored 26 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
   run_id        : run-1
   500 total
-     +-- 176 completed
-     |    +-- 164 resolved
+     +-- 177 completed
+     |    +-- 165 resolved
      |    |   +-- 0 failed
      |    |   +-- 12 unresolved
      |    +-- 26 in-progress or unknown
-     +-- 298 unvisited
-  progress       : 35.2% (176/500 completed/total) - in progress
-  score estimate : 93.2% (164/176 resolved/completed) - in progress
-  score final    : 32.8% (164/500 resolved/total) - in progress
+     +-- 297 unvisited
+  progress       : 35.4% (177/500 completed/total) - in progress
+  score estimate : 93.2% (165/177 resolved/completed) - in progress
+  score final    : 33.0% (165/500 resolved/total) - in progress

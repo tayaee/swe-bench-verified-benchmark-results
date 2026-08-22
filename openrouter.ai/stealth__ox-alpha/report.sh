@@ -331,12 +331,20 @@ print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
+# Counts for the breakdown tree; child sums match their parents.
+#   total    = completed + unvisited
+#   completed = resolved + non_resolved
+#   non_resolved = failed + unresolved + pending  ("in-progress or unknown")
+completed = done + pending                      # visited = n_preds
+non_resolved = completed - resolved             # = failed + unresolved + pending
+
 print(f"  {TOTAL} total")
-print(f"     +-- {done} completed")
+print(f"     +-- {completed} completed")
 print(f"     |    +-- {resolved} resolved")
-print(f"     |    |   +-- {failed} failed")
-print(f"     |    |   +-- {unresolved} unresolved")
-print(f"     |    +-- {pending} in-progress or unknown")
+print(f"     |    +-- {non_resolved} non-resolved")
+print(f"     |    |    +-- {failed} failed")
+print(f"     |    |    +-- {unresolved} unresolved")
+print(f"     |    |    +-- {pending} in-progress or unknown")
 print(f"     +-- {unvisited} unvisited")
 suffix = "" if finished else " - in progress"
 print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total){suffix}")

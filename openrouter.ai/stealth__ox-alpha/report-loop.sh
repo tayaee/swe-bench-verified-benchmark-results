@@ -6,6 +6,7 @@ do
 		echo Last updated: $(date --iso-8601=sec)
 		./report.sh
 	) | tee report.results.txt
+	git pull
 	if [ -n "$(git status --porcelain -- report.results.txt)" ]; then
 		git add report.results.txt && git commit -m "Update report.results.txt" && git push
 	fi

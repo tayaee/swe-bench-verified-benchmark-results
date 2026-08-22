@@ -1,0 +1,28 @@
+Last updated: 2026-08-22T05:00:14-04:00
+[report] run=run-1: scoring 1 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=1 already_scored=0 to_score=1
+Running 1 instances...
+All instances run.
+Total instances: 1
+Instances submitted: 1
+Instances completed: 1
+Instances incomplete: 0
+Instances resolved: 1
+Instances unresolved: 0
+Instances with likely infrastructure failures: 0
+Instances with ambiguous failures: 0
+Instances with empty patches: 0
+Instances with errors: 0
+Unstopped containers: 0
+Unremoved images: 1
+Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/stealth__ox-alpha.run-1.json
+[eval] scored 1 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
+
+=== SWE-bench Verified SCORE — provider: /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha ===
+  run_id        : run-1
+  completed     : 3
+  resolved      : 3 (100.0%)
+  failed        : 0 (0.0%)
+  unresolved    : 0 (0.0%)
+  resolved rate : 3/3
+  score         : 3/500

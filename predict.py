@@ -32,6 +32,7 @@ def main() -> None:
                     help="subset of instance ids (default: all)")
     ap.add_argument("--out", required=True, help="output JSONL path")
     ap.add_argument("--model", required=True, help="litellm model id")
+    ap.add_argument("--max_tokens", type=int, default=8192)
     args = ap.parse_args()
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
@@ -63,15 +64,28 @@ def main() -> None:
             )
             patch = ""
             try:
+                # OpenRouter models need the "openrouter/" provider prefix
+                # for litellm to know which API to call. litellm rejects bare
+                # model ids like "stealth/ox-alpha" with BadRequestError.
+                litellm_model = (
+                    args.model
+                    if "/" in args.model.split("/")[0] or args.model.startswith(("openai/", "anthropic/", "azure/"))
+                    else f"openrouter/{args.model}"
+                )
                 resp = litellm.completion(
-                    model=args.model,
+                    model=litellm_model,
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.0,
+                    max_tokens=args.max_tokens,
                 )
-                patch = extract_patch(resp.choices[0].message.content)
+                msg = resp.choices[0].message
+                patch = extract_patch(msg.content or "")
+                if not patch and getattr(msg, "reasoning_content", None):
+                    # reasoning-only reply: try to pull a diff out of the reasoning text
+                    patch = extract_patch(msg.reasoning_content)
             except Exception as e:  # noqa: BLE001 — keep going on API errors
                 print(f"[predict] ERROR {iid}: {e}", file=sys.stderr, flush=True)
             out.write(json.dumps({

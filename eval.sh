@@ -24,12 +24,11 @@ RUN_ID="${2:-}"
 LOG_BASE="$ROOT/swebench-work/logs/run_evaluation/$OX_ALPHA_MODEL_ID"
 INTERVAL=30
 
-# Use the swebench package via the project's uv-managed venv.
-PY=python3
-[[ -x "$ROOT/.venv/bin/python" ]] && PY="$ROOT/.venv/bin/python"
+# Use the swebench package via the project's uv-managed venv (auto-syncs).
+PY() { uv run --project "$ROOT" python "$@"; }
 
 score_once() {
-  "$PY" - "$LOG_BASE" "$RUN_ID" <<'EOF'
+  PY - "$LOG_BASE" "$RUN_ID" <<'EOF'
 import glob, json, os, sys
 
 log_base, run_id = sys.argv[1], sys.argv[2]

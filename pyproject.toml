@@ -7,6 +7,7 @@ dependencies = [
     "swebench[all]",
     "litellm",
     "datasets",
+    "mini-swe-agent",
 ]
 
 [tool.uv]

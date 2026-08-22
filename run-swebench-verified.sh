@@ -11,16 +11,18 @@
 # number of NEW attempts (default 10).
 #
 # What it does:
-#   1. Sets up an isolated venv with swebench installed.
-#   2. Runs inference + evaluation over SWE-bench Verified using the
-#      model stealth/ox-alpha via openrouter.ai.
-#   3. While instances complete, eval.sh recomputes the score in real time.
+#   1. Sets up an isolated venv with mini-swe-agent + swebench installed.
+#   2. Runs the multi-turn agent inference via mini-swe-agent on
+#      SWE-bench Verified using the model stealth/ox-alpha via openrouter.ai.
+#   3. Evaluates the produced predictions with the official swebench harness.
+#   4. While instances complete, eval.sh recomputes the score in real time.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 : "${OPENROUTER_API_KEY:?error: OPENROUTER_API_KEY environment variable must be set}"
 OX_ALPHA_MODEL_ID="stealth/ox-alpha"  # model id on openrouter.ai
+MSWEA_CONFIG="$ROOT/swebench.yaml"    # mini-swe-agent config (OpenRouter model class etc.)
 
 MAX_INSTANCES=""                     # empty = all 500
 MAX_WORKERS=4                        # parallel workers (-w)
@@ -45,25 +47,44 @@ mkdir -p "$WORKDIR"
 
 # ---------------------------------------------------------------- env setup (uv)
 command -v uv >/dev/null || { echo "error: uv not found" >&2; exit 1; }
-if [[ ! -x "$VENV/bin/python" ]]; then
-  echo "[setup] creating venv with uv at $VENV"
-  (cd "$ROOT" && uv sync --project "$ROOT")
-fi
+# uv run auto-creates/syncs .venv from pyproject.toml+uv.lock on every call,
+# so a missing/broken venv self-heals instead of failing mid-run.
+py() { uv run --project "$ROOT" python "$@"; }
+sb() { uv run --project "$ROOT" swebench "$@"; }
+msa() { uv run --project "$ROOT" python -m minisweagent.run.benchmarks.swebench "$@"; }
 export PATH="$VENV/bin:$PATH"
 
-echo "[run] model   : $OX_ALPHA_MODEL_ID (openrouter.ai)"
+echo "[run] model   : $OX_ALPHA_MODEL_ID (openrouter.ai, multi-turn via mini-swe-agent)"
 echo "[run] workers : $MAX_WORKERS"
 echo "[run] run_id  : $RUN_ID"
 echo "[run] workdir : $WORKDIR"
 
 cd "$WORKDIR"
 
+# Run mini-swe-agent inference on one or more instances and emit preds.json
+# under $out_dir. Then we feed that into the official swebench harness.
+#
+# Usage: run_inference <out_dir> [--filter REGEX] [--slice N:M]
+run_inference() {
+  local out_dir="$1"; shift
+  mkdir -p "$out_dir"
+  msa \
+    --subset verified \
+    --split test \
+    --model "$OX_ALPHA_MODEL_ID" \
+    --model-class minisweagent.models.openrouter_model.OpenRouterModel \
+    -c "$MSWEA_CONFIG" \
+    --output "$out_dir" \
+    --workers "$MAX_WORKERS" \
+    "$@"
+}
+
 # ------------------------------------------------------- smoke-test mode
 if [[ -n "$LIMIT_NEW_OK" ]]; then
   echo "[smoke] target resolved: $LIMIT_NEW_OK, max attempts: $LIMIT_MAX_TRY"
 
   # instance ids from the dataset (Verified, deterministic order)
-  mapfile -t INSTANCE_IDS < <("$VENV/bin/python" -c '
+  mapfile -t INSTANCE_IDS < <(py -c '
 from datasets import load_dataset
 ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
 for i in ds["instance_id"]:
@@ -79,35 +100,39 @@ for i in ds["instance_id"]:
     sub_run="$RUN_ID-smoke-$tries"
     echo "[smoke] attempt $tries/$LIMIT_MAX_TRY : $iid"
 
-    # step 1: inference for this single instance
-    pred_file="$WORKDIR/predictions/$sub_run.jsonl"
-    if ! "$VENV/bin/python" "$ROOT/predict.py" \
-        --instance_ids "$iid" --out "$pred_file" --model "$OX_ALPHA_MODEL_ID"; then
-      echo "[smoke] prediction failed for $iid, trying next"
+    # step 1: multi-turn agent inference (mini-swe-agent in docker)
+    out_dir="$WORKDIR/runs/$sub_run"
+    if ! run_inference "$out_dir" --filter "^${iid}\$"; then
+      echo "[smoke] inference failed for $iid, trying next"
+      continue
+    fi
+
+    pred_file="$out_dir/preds.json"
+    if [[ ! -s "$pred_file" ]]; then
+      echo "[smoke] no predictions produced for $iid, trying next"
       continue
     fi
 
     # step 2: evaluation (build + run tests in docker)
-    if ! python -m swebench.harness.run_evaluation \
-        --dataset_name princeton-nlp/SWE-bench_Verified \
-        --run_id "$sub_run" \
-        --predictions_path "$pred_file" \
-        --instance_ids "$iid" \
-        --max_workers "$MAX_WORKERS"; then
+    if ! sb eval verified \
+        --predictions "$pred_file" \
+        --run-id "$sub_run" \
+        --instance "$iid" \
+        --workers "$MAX_WORKERS" \
+        --report-dir "$WORKDIR/logs/run_evaluation"; then
       echo "[smoke] harness failed for $iid, trying next"
       continue
     fi
-    report="$WORKDIR/logs/run_evaluation/$OX_ALPHA_MODEL_ID/$sub_run/report.json"
-    if [[ ! -f "$report" ]]; then
-      # newer swebench writes reports under a flat dir
-      report=$(find "$WORKDIR/logs/run_evaluation" -path "*$sub_run*report.json" 2>/dev/null | head -n1 || true)
-    fi
-    if [[ -n "$report" ]] && "$VENV/bin/python" -c '
+    # mini-swe-agent writes summary results to <out_dir>/results.json
+    results_file="$out_dir/results.json"
+    if [[ -n "$results_file" ]] && py -c '
 import json, sys
-rep = json.load(open(sys.argv[1]))
-r = rep.get(sys.argv[2], {})
-sys.exit(0 if r.get("resolved") or any(v.get("resolved") for v in rep.values()) else 1)
-' "$report" "$iid" 2>/dev/null; then
+data = json.load(open(sys.argv[1]))
+iid = sys.argv[2]
+# mini-swe-agent writes a per-instance summary; resolved is True/False per instance
+inst = data.get(iid) or next((v for v in data.values() if isinstance(v, dict) and v.get("instance_id") == iid), {})
+sys.exit(0 if inst.get("resolved") else 1)
+' "$results_file" "$iid" 2>/dev/null; then
       new_ok=$((new_ok + 1))
       echo "[smoke] RESOLVED ✓ ($new_ok/$LIMIT_NEW_OK)"
     fi
@@ -115,45 +140,35 @@ sys.exit(0 if r.get("resolved") or any(v.get("resolved") for v in rep.values()) 
   done
 
   echo "[smoke] finished: $new_ok resolved out of $tries attempted"
-  exit 0
+  [[ "$new_ok" -ge "$LIMIT_NEW_OK" ]] && exit 0 || exit 1
 fi
 
 # ------------------------------------------------------------- run harness
 cd "$WORKDIR"
 
-# step 1: inference — generate predictions via litellm/openrouter
-PRED_FILE="$WORKDIR/predictions/full.jsonl"
-PRED_ARGS=(--out "$PRED_FILE" --model "$OX_ALPHA_MODEL_ID")
+# step 1: multi-turn agent inference over SWE-bench Verified
+OUT_DIR="$WORKDIR/runs/$RUN_ID"
+MSA_ARGS=(--output "$OUT_DIR")
 if [[ -n "$MAX_INSTANCES" ]]; then
-  PRED_IDS=$(head -n "$MAX_INSTANCES" <(
-    "$VENV/bin/python" -c '
+  # Get just the first N instance ids and use --slice to select them
+  FIRST_IDS=$(head -n "$MAX_INSTANCES" <(
+    py -c '
 from datasets import load_dataset
 ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
 for i in ds["instance_id"]:
     print(i)
 ')
   )
-  PRED_ARGS+=(--instance_ids $PRED_IDS)
+  MSA_ARGS+=(--filter "^(($(echo "$FIRST_IDS" | paste -sd '|' -)))\$")
 fi
-"$VENV/bin/python" "$ROOT/predict.py" "${PRED_ARGS[@]}"
+run_inference "$OUT_DIR" "${MSA_ARGS[@]}"
 
 # step 2: evaluation
-ARGS=(
-  --dataset_name princeton-nlp/SWE-bench_Verified
-  --run_id "$RUN_ID"
-  --predictions_path "$PRED_FILE"
-  --max_workers "$MAX_WORKERS"
-)
+PRED_FILE="$OUT_DIR/preds.json"
+EVAL_ARGS=(verified --predictions "$PRED_FILE" --run-id "$RUN_ID" --workers "$MAX_WORKERS"
+           --report-dir "$WORKDIR/logs/run_evaluation")
 if [[ -n "$MAX_INSTANCES" ]]; then
-  PRED_IDS=$(head -n "$MAX_INSTANCES" <(
-    "$VENV/bin/python" -c '
-from datasets import load_dataset
-ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
-for i in ds["instance_id"]:
-    print(i)
-')
-  )
-  ARGS+=(--instance_ids $PRED_IDS)
+  for iid in $FIRST_IDS; do EVAL_ARGS+=(--instance "$iid"); done
 fi
 
 # live score in background while evaluation runs
@@ -161,9 +176,10 @@ fi
 LIVE_PID=$!
 trap 'kill "$LIVE_PID" 2>/dev/null || true' EXIT
 
-"$VENV/bin/python" -m swebench.harness.run_evaluation "${ARGS[@]}"
+sb eval "${EVAL_ARGS[@]}"
 
 wait "$LIVE_PID" 2>/dev/null || true
 trap - EXIT
 
 echo "[done] final reports: $WORKDIR/logs/run_evaluation/$OX_ALPHA_MODEL_ID/$RUN_ID/"
+echo "[done] trajectories : $OUT_DIR/"

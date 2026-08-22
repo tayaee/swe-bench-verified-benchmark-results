@@ -1,0 +1,29 @@
+# swebench.yaml — mini-swe-agent config for SWE-bench Verified with ox-alpha (OpenRouter).
+#
+# Used via:
+#   python -m minisweagent.run.benchmarks.swebench -c swebench.yaml ...
+#
+# This file is an *override* on top of the default config at
+# minisweagent/config/benchmarks/swebench.yaml. It only changes the bits we need
+# to swap the model + cost tracking; the agent/environment templates stay default.
+#
+# Note: --config / -c replaces the default config unless you pass the default
+# file explicitly, so we re-include the defaults that matter (step_limit, etc.).
+
+agent:
+  step_limit: 250       # max model turns per instance (default: 250)
+  cost_limit: 3.0       # USD cap per instance (default: 3.0)
+
+environment:
+  timeout: 60           # shell command timeout (s)
+
+model:
+  # OpenRouter serves stealth/ox-alpha — no provider prefix needed, OpenRouter
+  # resolves the model id directly. The OpenRouterModel class (set via
+  # --model-class on the CLI) uses OPENROUTER_API_KEY for auth.
+  model_name: "stealth/ox-alpha"
+  model_kwargs:
+    drop_params: true   # drop unsupported litellm params instead of erroring
+  # ox-alpha pricing isn't in OpenRouterModel's static tables, so cost
+  # tracking would otherwise throw. Ignore instead.
+  cost_tracking: "ignore_errors"

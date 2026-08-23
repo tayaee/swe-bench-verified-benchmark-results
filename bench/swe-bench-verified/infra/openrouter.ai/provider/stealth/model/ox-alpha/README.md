@@ -1,4 +1,4 @@
-# openrouter.ai/stealth__ox-alpha/
+# stealth/ox-alpha (from openrouter.ai)
 
 ## Instruction
 ```bash

@@ -8,8 +8,8 @@
 ```bash
 # smoke test
 export OPENROUTER_API_KEY="sk-or-..."
-./smoke-test.sh        # resolves a single pinned instance end-to-end
-./clean.sh             # clean up results
+./smoke-test.sh
+./clean.sh
 
 # inference (takes 1-2 days with 4 workers for 500 instances)
 ./run.sh

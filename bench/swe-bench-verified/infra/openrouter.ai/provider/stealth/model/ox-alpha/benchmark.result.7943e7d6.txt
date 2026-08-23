@@ -1,8 +1,6 @@
 Test started: 2026-08-22T04:53:26-04:00
 Last updated: 2026-08-23T14:33:13-04:00 (1 day 9 hours 39 minutes)
 
-[report] --no-eval set, skipping implicit eval
-
 === Benchmark Result ===
   benchmark      : SWE-bench Verified
   infra          : openrouter.ai

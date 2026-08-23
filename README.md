@@ -1,5 +1,5 @@
 # SWE-bench Verified Benchmark Results
 
-## stealth/ox-alpha (served by openrouter.ai)
+## Model: stealth/ox-alpha (infra: openrouter.ai online)
 * SWE-bench Verified Score [85.4%](bench/swe-bench-verified/infra/openrouter.ai/provider/stealth/model/ox-alpha/report.results.7943e7d6.txt)
-* [Bench scripts](bench/swe-bench-verified/infra/openrouter.ai/provider/stealth/model/ox-alpha/)
+* [bench scripts](bench/swe-bench-verified/infra/openrouter.ai/provider/stealth/model/ox-alpha/)

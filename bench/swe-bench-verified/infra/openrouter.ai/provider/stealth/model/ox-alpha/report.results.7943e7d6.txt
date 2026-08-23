@@ -20,7 +20,8 @@ Report written to logs/run_evaluation/stealth__ox-alpha.run-1.json
 [eval] scored 39 instance(s) — reports at logs/run_evaluation/run-1/
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, provider:stealth, model:ox-alpha ===
-  run_id        : run-1
+  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified
+  run_id         : run-1
   500 total
      +-- 500 attempted
      |    +-- 461 evaluated
@@ -40,4 +41,3 @@ Report written to logs/run_evaluation/stealth__ox-alpha.run-1.json
   progress       : 100.0% (500/500 attempted/total)
   score estimate : 85.4% (427/500 resolved/attempted)
   score final    : 85.4% (427/500 resolved/total)
-  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified

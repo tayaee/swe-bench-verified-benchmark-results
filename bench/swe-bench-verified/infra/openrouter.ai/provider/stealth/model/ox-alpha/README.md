@@ -1,8 +1,8 @@
 # stealth/ox-alpha (from openrouter.ai)
 
 ## SWE-bench Verified Result
-* SWE-bench Verified Score [85.4%](benchmark.result.7943e7d6.txt)
-* 2 client-faults were retried, but no score change.
+* Leaderboard https://llm-stats.com/benchmarks/swe-bench-verified
+* SWE-bench Verified Score [85.4%](benchmark.result.7943e7d6.txt) (Note: Two client-faults were retried, but made no change in the result.)
 
 ## Instruction
 ```bash

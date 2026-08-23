@@ -7,7 +7,8 @@
 ## Instruction
 ```bash
 # smoke test
-export OPENROUTER_API_KEY="sk-or-..."
+export OPENROUTER_API_KEY="<your-key>"
+docker ps
 ./smoke-test.sh
 ./clean.sh
 
@@ -16,6 +17,6 @@ export OPENROUTER_API_KEY="sk-or-..."
 ./eval.sh
 ./report.sh | tee benchmark.result.$(cat /etc/machine-id | cut -b1-8).txt
 
-# clean up results and containers
+# clean up
 ./clean.sh --docker
 ```

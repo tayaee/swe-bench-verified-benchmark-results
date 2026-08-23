@@ -363,7 +363,9 @@ if pending and run_id is not None:
 # Provider dir layout: .../<infra>/provider/<model_provider>/model/<model>
 # e.g. openrouter.ai/provider/stealth/model/ox-alpha
 parts = os.path.normpath(provider_dir).split(os.sep)
-provider_desc = f"infra:{parts[-5]}, provider:{parts[-3]}, model:{parts[-1]}"
+infra = parts[-5]
+model_provider = parts[-3]
+model_name = parts[-1]
 
 pct = lambda num, den: f"{100.0 * num / den:.1f}%"
 # Counts for the breakdown tree; child sums match their parents.
@@ -382,32 +384,37 @@ unattempted = TOTAL - attempted
 wrong_answer = failed + unresolved             # submitted, tests didn't pass
 est = pct(resolved, attempted) if attempted else "n/a"
 finished = attempted == TOTAL
-print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
+print(f"\n=== Benchmark Result ===")
+print(f"  benchmark      : SWE-bench Verified")
+print(f"  infra          : {infra}")
+print(f"  model provider : provider:{model_provider}")
+print(f"  model name     : {model_name}")
 print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
 print(f"  run_id         : {run_id or '(all)'}")
 if fallback_note:
-    print(f"  note          : {fallback_note}")
+    print(f"  note           : {fallback_note}")
 
-print(f"  {TOTAL} total")
-print(f"     +-- {attempted} attempted")
-print(f"     |    +-- {done} evaluated")
-print(f"     |    |    +-- {resolved} resolved")
-print(f"     |    |    +-- {wrong_answer} unresolved")
-print(f"     |    +-- {pending} not-ready-for-evaluation")
+print(f"  breakdown      :")
+print(f"    {TOTAL} total")
+print(f"       +-- {attempted} attempted")
+print(f"       |    +-- {done} evaluated")
+print(f"       |    |    +-- {resolved} resolved")
+print(f"       |    |    +-- {wrong_answer} unresolved")
+print(f"       |    +-- {pending} not-ready-for-evaluation")
 for cat in FAULT_CATEGORY_ORDER:
     items = pending_faults[cat]
     hint = " (try these again)" if cat in RETRY_CATS else ""
-    print(f"     |    |    +-- {sum(items.values())} {cat}{hint}")
+    print(f"       |    |    +-- {sum(items.values())} {cat}{hint}")
     for label in STATUS_ORDER:  # fixed order; skip statuses not present
         n = items.get(label, 0)
         if not n:
             continue
-        print(f"     |    |    |    +-- {n} {label}")
+        print(f"       |    |    |    +-- {n} {label}")
 n_unknown = sum(unclassified.values())
-print(f"     |    |    +-- {n_unknown} unknown")
+print(f"       |    |    +-- {n_unknown} unknown")
 for label, n in sorted(unclassified.items()):  # unexpected statuses, alphabetical
-    print(f"     |    |    |    +-- {n} {label}")
-print(f"     +-- {unattempted} unattempted")
+    print(f"       |    |    |    +-- {n} {label}")
+print(f"       +-- {unattempted} unattempted")
 suffix = "" if finished else " - in progress"
 print(f"  progress       : {pct(attempted, TOTAL)} ({attempted}/{TOTAL} attempted/total){suffix}")
 print(f"  score estimate : {est} ({resolved}/{attempted} resolved/attempted){suffix}")

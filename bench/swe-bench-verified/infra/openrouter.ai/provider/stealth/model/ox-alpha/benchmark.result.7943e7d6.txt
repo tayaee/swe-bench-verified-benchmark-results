@@ -1,25 +1,32 @@
 Test started: 2026-08-22T04:53:26-04:00
 Last updated: 2026-08-23T14:33:13-04:00 (1 day 9 hours 39 minutes)
 
-=== SWE-bench Verified SCORE — infra:openrouter.ai, provider:stealth, model:ox-alpha ===
+[report] --no-eval set, skipping implicit eval
+
+=== Benchmark Result ===
+  benchmark      : SWE-bench Verified
+  infra          : openrouter.ai
+  model provider : provider:stealth
+  model name     : ox-alpha
   leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified
   run_id         : run-1
-  500 total
-     +-- 500 attempted
-     |    +-- 461 evaluated
-     |    |    +-- 427 resolved
-     |    |    +-- 34 unresolved
-     |    +-- 39 not-ready-for-evaluation
-     |    |    +-- 0 infra-faults (try these again)
-     |    |    +-- 0 engine-faults (try these again)
-     |    |    +-- 37 model-faults
-     |    |    |    +-- 28 RepeatedFormatError
-     |    |    |    +-- 5 KeyError
-     |    |    |    +-- 4 LimitsExceeded
-     |    |    +-- 2 client-faults (try these again)
-     |    |    |    +-- 2 no-traj
-     |    |    +-- 0 unknown
-     +-- 0 unattempted
+  breakdown      :
+    500 total
+       +-- 500 attempted
+       |    +-- 461 evaluated
+       |    |    +-- 427 resolved
+       |    |    +-- 34 unresolved
+       |    +-- 39 not-ready-for-evaluation
+       |    |    +-- 0 infra-faults (try these again)
+       |    |    +-- 0 engine-faults (try these again)
+       |    |    +-- 37 model-faults
+       |    |    |    +-- 28 RepeatedFormatError
+       |    |    |    +-- 5 KeyError
+       |    |    |    +-- 4 LimitsExceeded
+       |    |    +-- 2 client-faults (try these again)
+       |    |    |    +-- 2 no-traj
+       |    |    +-- 0 unknown
+       +-- 0 unattempted
   progress       : 100.0% (500/500 attempted/total)
   score estimate : 85.4% (427/500 resolved/attempted)
   score final    : 85.4% (427/500 resolved/total)

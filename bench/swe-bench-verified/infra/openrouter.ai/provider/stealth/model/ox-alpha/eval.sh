@@ -133,15 +133,18 @@ fi
 # ---------------------------------------------------------------- invoke sb eval
 # Pass --report-dir only for the run-summary JSON. Per-instance reports land
 # under $PROVIDER_DIR/logs/run_evaluation regardless (see header comment).
+# cwd is now $WORKDIR, so pass paths relative to it. This keeps the
+# "Report written to ..." and "[eval] scored ... reports at ..." log lines
+# using relative paths regardless of where the script was invoked from.
 cd "$WORKDIR"
 eval_args=(verified
            --predictions "$pred_file"
            --run-id "$RUN_ID"
            --workers "$MAX_WORKERS"
-           --report-dir "$WORKDIR/logs/run_evaluation")
+           --report-dir "logs/run_evaluation")
 for iid in "${to_eval[@]}"; do
   eval_args+=(--instance "$iid")
 done
 
 sb eval "${eval_args[@]}"
-echo "[eval] scored ${#to_eval[@]} instance(s) — reports at $LOG_BASE/$RUN_ID/"
+echo "[eval] scored ${#to_eval[@]} instance(s) — reports at logs/run_evaluation/$RUN_ID/"

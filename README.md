@@ -1,4 +1,4 @@
-# SWE-bench Verified Results
+# SWE-bench Verified Benchmark Results
 
 ## stealth/ox-alpha (served by openrouter.ai)
 * Bench scripts [openrouter.ai/stealth__ox-alpha](openrouter.ai/stealth__ox-alpha)

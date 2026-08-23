@@ -1,6 +1,5 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-23T01:30:29-04:00 (20 hours 37 minutes)
+Last updated: 2026-08-23T01:58:43-04:00 (21 hours 5 minutes)
 
-[report] run=run-1: scoring 40 missing instance(s) via ./eval.sh
-[eval] run=run-1 workers=4 total=40 already_scored=0 to_score=40
-No instances to run.
+[report] run=run-1: scoring 41 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=41 already_scored=0 to_score=41

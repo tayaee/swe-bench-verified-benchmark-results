@@ -1,5 +1,35 @@
 Test started: 2026-08-22T04:53:26-04:00
 Last updated: 2026-08-23T01:58:43-04:00 (21 hours 5 minutes)
 
-[report] run=run-1: scoring 41 missing instance(s) via ./eval.sh
-[eval] run=run-1 workers=4 total=41 already_scored=0 to_score=41
+[report] run=run-1: scoring 40 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=40 already_scored=0 to_score=40
+No instances to run.
+Total instances: 40
+Instances submitted: 40
+Instances completed: 0
+Instances incomplete: 0
+Instances resolved: 0
+Instances unresolved: 0
+Instances with likely infrastructure failures: 0
+Instances with ambiguous failures: 0
+Instances with empty patches: 40
+Instances with errors: 0
+Unstopped containers: 0
+Unremoved images: 38
+Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/stealth__ox-alpha.run-1.json
+[eval] scored 40 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
+
+=== SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
+  run_id        : run-1
+  500 total
+     +-- 440 completed
+     |    +-- 370 resolved (submitted correct answer)
+     |    +-- 70 non-resolved
+     |    |    +-- 0 failed
+     |    |    +-- 30 unresolved (submitted wrong answer)
+     |    |    +-- 40 in-progress or unknown
+     +-- 60 unattempted
+  progress       : 80.0% (400/500 completed/total) - in progress
+  score estimate : 92.5% (370/400 resolved/completed) - in progress
+  score final    : 74.0% (370/500 resolved/total) - in progress
+  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified

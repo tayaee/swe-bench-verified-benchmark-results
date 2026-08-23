@@ -21,5 +21,5 @@ export OPENROUTER_API_KEY="sk-or-..."
 ```
 
 ## SWE-bench Verified Result
-* 2026-08-23 stealth/ox-alpha: 85.2% [report.results.7943e7d6.txt](report.results.7943e7d6.txt)
-
+* [report.results.7943e7d6.txt](report.results.7943e7d6.txt)
+* 2 client-faults were retried, but no score change.

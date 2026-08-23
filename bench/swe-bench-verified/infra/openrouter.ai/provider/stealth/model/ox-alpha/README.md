@@ -1,5 +1,9 @@
 # stealth/ox-alpha (from openrouter.ai)
 
+## SWE-bench Verified Result
+* SWE-bench Verified Score [85.4%](benchmark.result.7943e7d6.txt)
+* 2 client-faults were retried, but no score change.
+
 ## Instruction
 ```bash
 # smoke test
@@ -15,7 +19,3 @@ export OPENROUTER_API_KEY="sk-or-..."
 # clean up results and containers
 ./clean.sh --docker
 ```
-
-## SWE-bench Verified Result
-* SWE-bench Verified Score [85.4%](benchmark.result.7943e7d6.txt)
-* 2 client-faults were retried, but no score change.

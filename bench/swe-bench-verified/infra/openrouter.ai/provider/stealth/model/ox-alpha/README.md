@@ -17,5 +17,5 @@ export OPENROUTER_API_KEY="sk-or-..."
 ```
 
 ## SWE-bench Verified Result
-* SWE-bench Verified Score: [85.4%](benchmark.result.7943e7d6.txt)
+* SWE-bench Verified Score [85.4%](benchmark.result.7943e7d6.txt)
 * 2 client-faults were retried, but no score change.

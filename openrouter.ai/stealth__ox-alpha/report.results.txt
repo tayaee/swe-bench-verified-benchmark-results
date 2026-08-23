@@ -1,35 +1,35 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-22T21:34:04-04:00 (16 hours 40 minutes)
+Last updated: 2026-08-22T21:37:47-04:00 (16 hours 44 minutes)
 
-[report] run=run-1: scoring 41 missing instance(s) via ./eval.sh
-[eval] run=run-1 workers=4 total=41 already_scored=0 to_score=41
-Running 3 instances...
+[report] run=run-1: scoring 39 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=39 already_scored=0 to_score=39
+Running 1 instances...
 All instances run.
-Total instances: 41
-Instances submitted: 41
-Instances completed: 3
+Total instances: 39
+Instances submitted: 39
+Instances completed: 1
 Instances incomplete: 0
-Instances resolved: 3
+Instances resolved: 1
 Instances unresolved: 0
 Instances with likely infrastructure failures: 0
 Instances with ambiguous failures: 0
 Instances with empty patches: 38
 Instances with errors: 0
 Unstopped containers: 1
-Unremoved images: 40
+Unremoved images: 38
 Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/stealth__ox-alpha.run-1.json
-[eval] scored 41 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
+[eval] scored 39 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
   run_id        : run-1
   500 total
-     +-- 351 completed
-     |    +-- 286 resolved (submitted correct answer)
-     |    +-- 65 non-resolved
+     +-- 353 completed
+     |    +-- 289 resolved (submitted correct answer)
+     |    +-- 64 non-resolved
      |    |    +-- 0 failed
      |    |    +-- 25 unresolved (submitted wrong answer)
-     |    |    +-- 40 in-progress or unknown
-     +-- 149 unvisited
-  progress       : 62.2% (311/500 completed/total) - in progress
-  score estimate : 92.0% (286/311 resolved/completed) - in progress
-  score final    : 57.2% (286/500 resolved/total) - in progress
+     |    |    +-- 39 in-progress or unknown
+     +-- 147 unvisited
+  progress       : 62.8% (314/500 completed/total) - in progress
+  score estimate : 92.0% (289/314 resolved/completed) - in progress
+  score final    : 57.8% (289/500 resolved/total) - in progress

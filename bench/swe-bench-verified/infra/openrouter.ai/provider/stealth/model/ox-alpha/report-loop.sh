@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RESULTS_FILE=$(report.results.$(cat /etc/machine-id | cut -b1-8).txt)
+RESULTS_FILE=report.results.$(cat /etc/machine-id | cut -b1-8).txt
 while :
 do
 	./eval.sh

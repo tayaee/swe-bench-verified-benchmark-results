@@ -225,6 +225,7 @@ else:
 
 # ---------------------------------------------------------------- aggregate reports
 resolved = failed = unresolved = 0
+scored = set()   # instance_ids that have an eval report
 for report_path in report_files:
     test_out = os.path.join(os.path.dirname(report_path), "test_output.txt")
     inst_id = os.path.basename(os.path.dirname(test_out))
@@ -241,6 +242,7 @@ for report_path in report_files:
     except Exception:
         continue
 
+    scored.add(inst_id)
     inst = rep.get(inst_id)
     if not isinstance(inst, dict):
         inst = rep  # legacy fallback
@@ -312,43 +314,95 @@ if run_id is not None:
 pending = max(n_preds - done, 0)
 unattempted = TOTAL - done - pending
 
+# ---------------------------------------------------------------- pending breakdown
+# Pending predictions are "in-progress or unknown" — but their per-instance
+# trajectory (.traj.json) records why the agent stopped, so we can classify
+# them by fault owner:
+#   infra-faults  — provider-side problems (rate limits); retry as-is
+#   engine-faults — harness/eval-side problems (none observed yet)
+#   model-faults  — the model failed to produce usable output
+#   client-faults — never ran locally (no trajectory); retry as-is
+FAULT_CATEGORY_ORDER = ["infra-faults", "engine-faults", "model-faults", "client-faults"]
+STATUS_TO_FAULT = {
+    "OpenRouterRateLimitError": "infra-faults",
+    "RepeatedFormatError":      "model-faults",
+    "KeyError":                 "model-faults",
+    "LimitsExceeded":           "model-faults",
+    "no-traj":                  "client-faults",
+}
+STATUS_ORDER = ["OpenRouterRateLimitError", "RepeatedFormatError", "KeyError",
+                "LimitsExceeded", "no-traj"]
+# Categories worth retrying as-is get a "(try these again)" hint.
+RETRY_CATS = {"infra-faults", "engine-faults", "client-faults"}
+pending_faults = {cat: {} for cat in FAULT_CATEGORY_ORDER}  # cat -> {status: count}
+unclassified = {}  # unexpected statuses that have no fault category yet
+if pending and run_id is not None:
+    pred_ids = []
+    try:
+        preds_data = json.load(open(preds_path))
+        if isinstance(preds_data, dict):
+            pred_ids = list(preds_data.keys())
+        else:
+            pred_ids = [p["instance_id"] for p in preds_data]
+    except Exception:
+        pred_ids = []
+    for iid in pred_ids:
+        if iid in scored:
+            continue
+        traj_path = os.path.join(workdir, "runs", str(run_id), iid,
+                                 f"{iid}.traj.json")
+        try:
+            status = json.load(open(traj_path)).get("info", {}).get("exit_status") \
+                or "no-traj"
+        except Exception:
+            status = "no-traj"
+        cat = STATUS_TO_FAULT.get(status)
+        bucket = pending_faults[cat] if cat else unclassified
+        bucket[status] = bucket.get(status, 0) + 1
+
 # ---------------------------------------------------------------- header
-# Parse the provider dir into infra / model-provider / model. Expected
-# layout: .../<infra>/<model_provider>__<model>. Falls back to the raw
-# path when it doesn't match so nothing breaks.
+# Provider dir layout: .../<infra>/provider/<model_provider>/model/<model>
+# e.g. openrouter.ai/provider/stealth/model/ox-alpha
 parts = os.path.normpath(provider_dir).split(os.sep)
-infra = parts[-2] if len(parts) >= 2 else None
-model_provider, _, model = parts[-1].partition("__") if parts else (None, "", None)
-if infra and model and model_provider:
-    provider_desc = f"infra:{infra}, model_provider:{model_provider}, model:{model}"
-else:
-    provider_desc = f"provider: {provider_dir}"
+provider_desc = f"infra:{parts[-5]}, provider:{parts[-3]}, model:{parts[-1]}"
 
 pct = lambda num, den: f"{100.0 * num / den:.1f}%"
-est = pct(resolved, done) if done else "n/a"
-finished = pending == 0 and unattempted == 0
+# Counts for the breakdown tree; child sums match their parents.
+#   total     = completed + unattempted
+#   completed = submitted-correct-answer + submitted-wrong-answer + others
+#               (failed folds into wrong-answer: tests ran but didn't pass)
+#   others    = pending predictions classified by fault owner
+completed = done + pending                      # visited = n_preds
+wrong_answer = failed + unresolved              # submitted, tests didn't pass
+est = pct(resolved, completed) if completed else "n/a"
+finished = completed == TOTAL
 print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
-# Counts for the breakdown tree; child sums match their parents.
-#   total    = completed + unattempted
-#   completed = resolved + non_resolved
-#   non_resolved = failed + unresolved + pending  ("in-progress or unknown")
-completed = done + pending                      # visited = n_preds
-non_resolved = completed - resolved             # = failed + unresolved + pending
 
 print(f"  {TOTAL} total")
 print(f"     +-- {completed} completed")
-print(f"     |    +-- {resolved} resolved (submitted correct answer)")
-print(f"     |    +-- {non_resolved} non-resolved")
-print(f"     |    |    +-- {failed} failed")
-print(f"     |    |    +-- {unresolved} unresolved (submitted wrong answer)")
-print(f"     |    |    +-- {pending} in-progress or unknown")
+print(f"     |    +-- {resolved} submitted-correct-answer")
+print(f"     |    +-- {wrong_answer} submitted-wrong-answer")
+print(f"     |    +-- {pending} others")
+for cat in FAULT_CATEGORY_ORDER:
+    items = pending_faults[cat]
+    hint = " (try these again)" if cat in RETRY_CATS else ""
+    print(f"     |    |    +-- {sum(items.values())} {cat}{hint}")
+    for label in STATUS_ORDER:  # fixed order; skip statuses not present
+        n = items.get(label, 0)
+        if not n:
+            continue
+        print(f"     |    |    |    +-- {n} {label}")
+n_unknown = sum(unclassified.values())
+print(f"     |    |    +-- {n_unknown} unknown")
+for label, n in sorted(unclassified.items()):  # unexpected statuses, alphabetical
+    print(f"     |    |    |    +-- {n} {label}")
 print(f"     +-- {unattempted} unattempted")
 suffix = "" if completed == TOTAL else " - in progress"
-print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total){suffix}")
-print(f"  score estimate : {est} ({resolved}/{done} resolved/completed){suffix}")
+print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} evaluated/total){suffix}")
+print(f"  score estimate : {est} ({resolved}/{completed} resolved/completed){suffix}")
 print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")
 print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
 EOF

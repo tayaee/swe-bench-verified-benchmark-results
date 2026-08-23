@@ -81,8 +81,13 @@ msa() { uv run --project "$REPO_ROOT" python -m minisweagent.run.benchmarks.sweb
 export PATH="$REPO_ROOT/.venv/bin:$PATH"
 
 # ---------------------------------------------------------------- banner
-echo "[run] provider : $PROVIDER_ID"
-echo "[run] model    : $MODEL_ID ($MODEL_CLASS)"
+# MODEL_ID is "<model_provider>/<model>" (e.g. stealth/ox-alpha); split it so
+# each part is labeled correctly instead of printing the combined id.
+MODEL_PROVIDER="${MODEL_ID%%/*}"
+MODEL_NAME="${MODEL_ID#*/}"
+echo "[run] infra    : $(basename "$(dirname "$(dirname "$PROVIDER_DIR")")")"
+echo "[run] provider : $MODEL_PROVIDER"
+echo "[run] model    : $MODEL_NAME ($MODEL_CLASS)"
 echo "[run] endpoint : ${API_BASE:-<provider-default>}"
 echo "[run] workers  : $MAX_WORKERS"
 echo "[run] run_id   : $RUN_ID"

@@ -310,7 +310,7 @@ if run_id is not None:
         except Exception:
             n_preds = 0
 pending = max(n_preds - done, 0)
-unvisited = TOTAL - done - pending
+unattempted = TOTAL - done - pending
 
 # ---------------------------------------------------------------- header
 # Parse the provider dir into infra / model-provider / model. Expected
@@ -326,13 +326,13 @@ else:
 
 pct = lambda num, den: f"{100.0 * num / den:.1f}%"
 est = pct(resolved, done) if done else "n/a"
-finished = pending == 0 and unvisited == 0
+finished = pending == 0 and unattempted == 0
 print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
 # Counts for the breakdown tree; child sums match their parents.
-#   total    = completed + unvisited
+#   total    = completed + unattempted
 #   completed = resolved + non_resolved
 #   non_resolved = failed + unresolved + pending  ("in-progress or unknown")
 completed = done + pending                      # visited = n_preds
@@ -345,7 +345,7 @@ print(f"     |    +-- {non_resolved} non-resolved")
 print(f"     |    |    +-- {failed} failed")
 print(f"     |    |    +-- {unresolved} unresolved (submitted wrong answer)")
 print(f"     |    |    +-- {pending} in-progress or unknown")
-print(f"     +-- {unvisited} unvisited")
+print(f"     +-- {unattempted} unattempted")
 suffix = "" if finished else " - in progress"
 print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total){suffix}")
 print(f"  score estimate : {est} ({resolved}/{done} resolved/completed){suffix}")

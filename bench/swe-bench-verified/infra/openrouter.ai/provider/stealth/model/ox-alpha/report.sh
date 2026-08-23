@@ -383,7 +383,8 @@ wrong_answer = failed + unresolved             # submitted, tests didn't pass
 est = pct(resolved, attempted) if attempted else "n/a"
 finished = attempted == TOTAL
 print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
-print(f"  run_id        : {run_id or '(all)'}")
+print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
+print(f"  run_id         : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
 
@@ -411,7 +412,6 @@ suffix = "" if finished else " - in progress"
 print(f"  progress       : {pct(attempted, TOTAL)} ({attempted}/{TOTAL} attempted/total){suffix}")
 print(f"  score estimate : {est} ({resolved}/{attempted} resolved/attempted){suffix}")
 print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")
-print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
 EOF
 }
 

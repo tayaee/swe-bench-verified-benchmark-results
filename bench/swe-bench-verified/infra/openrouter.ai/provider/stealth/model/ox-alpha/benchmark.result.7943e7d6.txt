@@ -2,7 +2,8 @@ Test started: 2026-08-22T04:53:26-04:00
 Last updated: 2026-08-23T14:33:13-04:00 (1 day 9 hours 39 minutes)
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, provider:stealth, model:ox-alpha ===
-  run_id        : run-1
+  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified
+  run_id         : run-1
   500 total
      +-- 500 attempted
      |    +-- 461 evaluated
@@ -22,4 +23,3 @@ Last updated: 2026-08-23T14:33:13-04:00 (1 day 9 hours 39 minutes)
   progress       : 100.0% (500/500 attempted/total)
   score estimate : 85.4% (427/500 resolved/attempted)
   score final    : 85.4% (427/500 resolved/total)
-  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified

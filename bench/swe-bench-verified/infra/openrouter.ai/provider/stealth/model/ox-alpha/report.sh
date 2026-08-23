@@ -312,7 +312,6 @@ if run_id is not None:
         except Exception:
             n_preds = 0
 pending = max(n_preds - done, 0)
-unattempted = TOTAL - done - pending
 
 # ---------------------------------------------------------------- pending breakdown
 # Pending predictions are "in-progress or unknown" — but their per-instance
@@ -368,24 +367,32 @@ provider_desc = f"infra:{parts[-5]}, provider:{parts[-3]}, model:{parts[-1]}"
 
 pct = lambda num, den: f"{100.0 * num / den:.1f}%"
 # Counts for the breakdown tree; child sums match their parents.
-#   total     = completed + unattempted
-#   completed = submitted-correct-answer + submitted-wrong-answer + others
-#               (failed folds into wrong-answer: tests ran but didn't pass)
-#   others    = pending predictions classified by fault owner
-completed = done + pending                      # visited = n_preds
-wrong_answer = failed + unresolved              # submitted, tests didn't pass
-est = pct(resolved, completed) if completed else "n/a"
-finished = completed == TOTAL
+# Tree shape:
+#   total
+#     attempted                (progress의 분모)
+#       evaluated
+#         resolved             (score의 분자)
+#         unresolved           (failed folds in: tests ran but didn't pass)
+#       not-ready-for-evaluation  (pending predictions, classified by fault owner)
+#         infra-faults / engine-faults / model-faults / client-faults
+#         unknown
+#     unattempted
+attempted = done + pending                     # visited = n_preds
+unattempted = TOTAL - attempted
+wrong_answer = failed + unresolved             # submitted, tests didn't pass
+est = pct(resolved, attempted) if attempted else "n/a"
+finished = attempted == TOTAL
 print(f"\n=== SWE-bench Verified SCORE — {provider_desc} ===")
 print(f"  run_id        : {run_id or '(all)'}")
 if fallback_note:
     print(f"  note          : {fallback_note}")
 
 print(f"  {TOTAL} total")
-print(f"     +-- {completed} completed")
-print(f"     |    +-- {resolved} submitted-correct-answer")
-print(f"     |    +-- {wrong_answer} submitted-wrong-answer")
-print(f"     |    +-- {pending} others")
+print(f"     +-- {attempted} attempted")
+print(f"     |    +-- {done} evaluated")
+print(f"     |    |    +-- {resolved} resolved")
+print(f"     |    |    +-- {wrong_answer} unresolved")
+print(f"     |    +-- {pending} not-ready-for-evaluation")
 for cat in FAULT_CATEGORY_ORDER:
     items = pending_faults[cat]
     hint = " (try these again)" if cat in RETRY_CATS else ""
@@ -400,9 +407,9 @@ print(f"     |    |    +-- {n_unknown} unknown")
 for label, n in sorted(unclassified.items()):  # unexpected statuses, alphabetical
     print(f"     |    |    |    +-- {n} {label}")
 print(f"     +-- {unattempted} unattempted")
-suffix = "" if completed == TOTAL else " - in progress"
-print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} evaluated/total){suffix}")
-print(f"  score estimate : {est} ({resolved}/{completed} resolved/completed){suffix}")
+suffix = "" if finished else " - in progress"
+print(f"  progress       : {pct(attempted, TOTAL)} ({attempted}/{TOTAL} attempted/total){suffix}")
+print(f"  score estimate : {est} ({resolved}/{attempted} resolved/attempted){suffix}")
 print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")
 print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
 EOF

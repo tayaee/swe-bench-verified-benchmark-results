@@ -1,24 +1,6 @@
 Test started: 2026-08-22T04:53:26-04:00
 Last updated: 2026-08-23T14:33:13-04:00 (1 day 9 hours 39 minutes)
 
-[report] run=run-1: scoring 39 missing instance(s) via ./eval.sh
-[eval] run=run-1 workers=4 total=39 already_scored=0 to_score=39
-No instances to run.
-Total instances: 39
-Instances submitted: 39
-Instances completed: 0
-Instances incomplete: 0
-Instances resolved: 0
-Instances unresolved: 0
-Instances with likely infrastructure failures: 0
-Instances with ambiguous failures: 0
-Instances with empty patches: 39
-Instances with errors: 0
-Unstopped containers: 0
-Unremoved images: 37
-Report written to logs/run_evaluation/stealth__ox-alpha.run-1.json
-[eval] scored 39 instance(s) — reports at logs/run_evaluation/run-1/
-
 === SWE-bench Verified SCORE — infra:openrouter.ai, provider:stealth, model:ox-alpha ===
   run_id        : run-1
   500 total

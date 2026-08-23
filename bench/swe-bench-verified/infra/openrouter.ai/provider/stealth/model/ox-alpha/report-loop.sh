@@ -24,7 +24,7 @@ while :
 do
 	iter=$((iter + 1))
 
-	./eval.sh
+	./eval.sh > eval.log 2>&1
 	./report.sh | tee $RESULT_FILE
 	git pull
 	if [ -n "$(git status --porcelain -- $RESULT_FILE)" ]; then

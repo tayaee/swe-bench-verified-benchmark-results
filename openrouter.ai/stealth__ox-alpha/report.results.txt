@@ -1,5 +1,5 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-22T21:57:01-04:00 (17 hours 3 minutes)
+Last updated: 2026-08-22T22:02:42-04:00 (17 hours 9 minutes)
 
 [report] run=run-1: scoring 40 missing instance(s) via ./eval.sh
 [eval] run=run-1 workers=4 total=40 already_scored=0 to_score=40
@@ -23,13 +23,13 @@ Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/steal
 === SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
   run_id        : run-1
   500 total
-     +-- 368 completed
-     |    +-- 301 resolved (submitted correct answer)
-     |    +-- 67 non-resolved
+     +-- 372 completed
+     |    +-- 303 resolved (submitted correct answer)
+     |    +-- 69 non-resolved
      |    |    +-- 0 failed
      |    |    +-- 27 unresolved (submitted wrong answer)
-     |    |    +-- 40 in-progress or unknown
-     +-- 132 unvisited
-  progress       : 65.6% (328/500 completed/total) - in progress
-  score estimate : 91.8% (301/328 resolved/completed) - in progress
-  score final    : 60.2% (301/500 resolved/total) - in progress
+     |    |    +-- 42 in-progress or unknown
+     +-- 128 unvisited
+  progress       : 66.0% (330/500 completed/total) - in progress
+  score estimate : 91.8% (303/330 resolved/completed) - in progress
+  score final    : 60.6% (303/500 resolved/total) - in progress

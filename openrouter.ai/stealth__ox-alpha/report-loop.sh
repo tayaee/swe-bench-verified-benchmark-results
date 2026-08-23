@@ -8,6 +8,5 @@ do
 	if [ -n "$(git status --porcelain -- report.results.txt)" ]; then
 		git add report.results.txt && git commit -m "Update report.results.txt" && git push
 	fi
-	echo + sleep 600
-	sleep 600
+	read -t 600 -p "Wait 600s or press ENTER to continue..." < /dev/tty
 done

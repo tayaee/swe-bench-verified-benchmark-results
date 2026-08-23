@@ -350,6 +350,7 @@ suffix = "" if finished else " - in progress"
 print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total){suffix}")
 print(f"  score estimate : {est} ({resolved}/{done} resolved/completed){suffix}")
 print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")
+print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
 EOF
 }
 

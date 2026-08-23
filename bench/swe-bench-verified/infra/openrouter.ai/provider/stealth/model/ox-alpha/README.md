@@ -9,12 +9,8 @@ export OPENROUTER_API_KEY="sk-or-..."
 
 # inference (takes 1-2 days with 4 workers for 500 instances)
 ./run.sh
-
-# score
 ./eval.sh
-
-# generate report
-./report.sh | tee report.results.$(cat /etc/machine-id | cut -b1-8).txt
+./report.sh | tee benchmark.result.$(cat /etc/machine-id | cut -b1-8).txt
 
 # clean up results and containers
 ./clean.sh --docker

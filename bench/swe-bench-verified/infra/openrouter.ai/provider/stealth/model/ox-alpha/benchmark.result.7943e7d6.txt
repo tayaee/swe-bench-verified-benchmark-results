@@ -3,10 +3,10 @@ Last updated: 2026-08-23T14:33:13-04:00 (1 day 9 hours 39 minutes)
 
 === Benchmark Result ===
   benchmark      : SWE-bench Verified
+  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified
   infra          : openrouter.ai
   model provider : provider:stealth
   model name     : ox-alpha
-  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified
   run_id         : run-1
   breakdown      :
     500 total

@@ -1,23 +1,23 @@
 Test started: 2026-08-22T04:53:26-04:00
-Last updated: 2026-08-23T00:36:06-04:00 (19 hours 42 minutes)
+Last updated: 2026-08-23T00:41:36-04:00 (19 hours 48 minutes)
 
-[report] run=run-1: scoring 39 missing instance(s) via ./eval.sh
-[eval] run=run-1 workers=4 total=39 already_scored=0 to_score=39
+[report] run=run-1: scoring 40 missing instance(s) via ./eval.sh
+[eval] run=run-1 workers=4 total=40 already_scored=0 to_score=40
 No instances to run.
-Total instances: 39
-Instances submitted: 39
+Total instances: 40
+Instances submitted: 40
 Instances completed: 0
 Instances incomplete: 0
 Instances resolved: 0
 Instances unresolved: 0
 Instances with likely infrastructure failures: 0
 Instances with ambiguous failures: 0
-Instances with empty patches: 39
+Instances with empty patches: 40
 Instances with errors: 0
 Unstopped containers: 0
-Unremoved images: 37
+Unremoved images: 38
 Report written to /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/stealth__ox-alpha.run-1.json
-[eval] scored 39 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
+[eval] scored 40 instance(s) — reports at /home/user1/git/ox-alpha-swebench-verified/openrouter.ai/stealth__ox-alpha/swebench-work/logs/run_evaluation/run-1/
 
 === SWE-bench Verified SCORE — infra:openrouter.ai, model_provider:stealth, model:ox-alpha ===
   run_id        : run-1

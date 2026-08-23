@@ -387,7 +387,7 @@ finished = attempted == TOTAL
 print(f"\n=== Benchmark Result ===")
 print(f"  benchmark      : SWE-bench Verified")
 print(f"  leaderboard    : https://llm-stats.com/benchmarks/swe-bench-verified")
-print(f"  infra          : {infra}")
+print(f"  model infra    : {infra}")
 print(f"  model provider : provider:{model_provider}")
 print(f"  model name     : {model_name}")
 print(f"  run_id         : {run_id or '(all)'}")

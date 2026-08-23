@@ -346,7 +346,7 @@ print(f"     |    |    +-- {failed} failed")
 print(f"     |    |    +-- {unresolved} unresolved (submitted wrong answer)")
 print(f"     |    |    +-- {pending} in-progress or unknown")
 print(f"     +-- {unattempted} unattempted")
-suffix = "" if finished else " - in progress"
+suffix = "" if completed == TOTAL else " - in progress"
 print(f"  progress       : {pct(done, TOTAL)} ({done}/{TOTAL} completed/total){suffix}")
 print(f"  score estimate : {est} ({resolved}/{done} resolved/completed){suffix}")
 print(f"  score final    : {pct(resolved, TOTAL)} ({resolved}/{TOTAL} resolved/total){suffix}")

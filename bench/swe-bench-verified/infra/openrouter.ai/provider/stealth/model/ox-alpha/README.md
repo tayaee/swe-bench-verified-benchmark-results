@@ -2,18 +2,22 @@
 
 ## Instruction
 ```bash
-# 0) Smoke test
+# smoke test
 export OPENROUTER_API_KEY="sk-or-..."
 ./smoke-test.sh        # resolves a single pinned instance end-to-end
-./clean.sh             # remove artifacts after smoke
+./clean.sh             # clean up results
 
-# 1) Inference → 2) scoring → 3) report (one-shot)
-./run.sh                                  # takes 1-2 days with 4 workers for 500 instances
-./eval.sh                                 # score everything in the run
+# inference (takes 1-2 days with 4 workers for 500 instances)
+./run.sh
+
+# score
+./eval.sh
+
+# generate report
 ./report.sh | tee report.results.$(cat /etc/machine-id | cut -b1-8).txt
 
-# Clean up
-./clean.sh --docker                       # also purge leftover swebench containers
+# clean up results and containers
+./clean.sh --docker
 ```
 
 ## SWE-bench Verified Result
